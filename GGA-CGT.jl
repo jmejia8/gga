@@ -2,67 +2,9 @@
 GGA-CGT                                                                                                       *
 GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING PROBLEM                      *
 """
-
-
-# CONSTANTS DEFINING THE SIZE OF THE PROBLEM
-const ATTRIBUTES = 5000
-const P_size_MAX = 500
-
-# char
-#   file[300],
-#   nameC[300];
-
-# int
-#   is_optimal_solution,
-#    save_bestSolution,
-#   generation,
-#    repeated_fitness,
-#    max_gen,
-#    life_span,
-#    P_size,
-#    seed;
-
-# 
-#   i,
-#    j,
-#    conf,
-#   number_items,
-#    bin_capacity,
-#   best_solution,
-#    n_,
-#    L2,
-#    bin_i,
-#    higher_weight,
-#    lighter_weight,
-#   ordered_weight[ATTRIBUTES],
-#    weight[ATTRIBUTES],
-#    permutation[ATTRIBUTES],
-#    items_auxiliary[ATTRIBUTES],
-#    ordered_population[P_size_MAX],
-#    best_individuals[P_size_MAX],
-#    random_individuals[P_size_MAX];
-
-# float
-#   p_m,
-#   p_c,
-#   k_ncs,
-#   k_cs,
-#   B_size,
-#   TotalTime;
-
-# long double
-#   total_accumulated_weight,
-#    weight1[ATTRIBUTES],
-#   _p_;
-
-# clock_t
-#   start,
-#   end;
-
-# FILE  *output,
-#     *input_Configurations,
-#       *input_Instances;
-
+import CSV
+import DelimitedFiles.readdlm
+import Random.shuffle
 
 mutable struct Bin
   w::Array{Int} # weights
@@ -82,28 +24,61 @@ mutable struct Solution
     highest_avaliable::Float64 # Saves the fullness of the bin with the highest avaliable capacity in the solution
 end
 
-function Solution(bins, fitness, bin_capacity; generation=0)
 
-    return 
+mutable struct Status
+    is_optimal_solution::Bool
+    save_bestSolution::Bool
+    repeated_fitness::Bool
+    max_gen::Int
+    life_span::Int
+    P_size::Int
+    seed::Int
+
+    conf::Int
+    number_items::Int
+    bin_capacity::Int
+    generation::Int
+    best_solution::Int
+    n_::Int
+    L2::Int
+    bin_i::Int
+    higher_weight::Int
+    lighter_weight::Int
+    ordered_weight::Array{Int, 1}
+    weight::Array{Int, 1}
+    permutation::Array{Int, 1}
+    items_auxiliary::Array{Int, 1}
+    ordered_population::Array{Int, 1}
+    best_individuals::Array{Int, 1}
+    random_individuals::Array{Int, 1}
+
+
+    p_m::Float64
+    p_c::Float64
+    k_ncs::Float64
+    k_cs::Float64
+    B_size::Float64
+    TotalTime::Float64
+
+
+    total_accumulated_weight::Float64
+    weight1::Array{Float64, 1}
+    _p_::Float64
+
+    start::Int
+    end_time::Int
+
+
+    global_best_solution::Solution
+    population::Array{Solution, 1}
+    children::Array{Solution, 1}
+
+    seed_emptybin::Int
+    seed_permutation::Int
 end
 
 
-# Population = Array{Solution, 1} 
-
-# Bin  global_best_solution[ATTRIBUTES],
-#       population[P_size_MAX][ATTRIBUTES],
-#          children[P_size_MAX][ATTRIBUTES];
-
-# Initial seeds for the random number generation
-# int   seed_emptybin,
-#     seed_permutation;
-
-
-import CSV
-import DelimitedFiles.readdlm
-import Random.shuffle
-
-function main ()
+function main()
 
     # char  aux[300], nombreC[300], mystring[300];
     try
@@ -162,7 +137,7 @@ function main ()
             Sort_Descending_Weights(ordered_weight, number_items);
             
 
-            L2, n_ = LowerBound(weight, ordered_weight, bin_capacity, number_items)
+            LowerBound(status)
 
             seed_permutation = seed;
             seed_emptybin = seed;
@@ -188,7 +163,7 @@ function main ()
 
             # procedure GGA-CGT
             start = time();
-            if !Generate_Initial_Population()  # Generate_Initial_Population() returns 1 if an optimal solution was found
+            if !Generate_Initial_Population(status)  # Generate_Initial_Population() returns 1 if an optimal solution was found
                 for generation = 1:max_gen)
                     if Generation() # Generation() returns 1 if an optimal solution was found
                         break;
@@ -199,7 +174,7 @@ function main ()
                     end_time = time();
                     TotalTime = (end_time - start)
                     Find_Best_Solution();
-                    WriteOutput();
+                    WriteOutput(status);
                 end
             end
 
@@ -229,29 +204,26 @@ end
    (0) otherwise                                                                      *
 ************************************************************************************************************************/
 """
-function Generate_Initial_Population()
+function Generate_Initial_Population(status)
     for i = 1:P_size
-        FF_n_(i, population, number_items, bin_capacity, ordered_weight);
+        FF_n_(i, status);
         
         population[i].generation = generation;
         population[i].fitness /= population[i].number_of_bins;
         
         if(population[i].number_of_bins == L2)
             end_time = clock();
-            Copy_Solution(global_best_solution, population[i], 0);
-            global_best_solution.fitness = population[i].fitness;;
-            global_best_solution.generation = generation;
-            global_best_solution.number_of_bins = population[i].number_of_bins;
-            global_best_solutionfully_bins = population[i].fully_bins;
-            TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-            WriteOutput();
-            is_optimal_solution = 1;
-            return 1;
+            global_best_solution = Copy_Solution(population[i], false);
+            
+            TotalTime = end_time - start
+            WriteOutput(status);
+            is_optimal_solution = true
+            return true
         end
     
     end
     
-    return 0;
+    return false
 end
 
 
@@ -301,13 +273,13 @@ function Generation()
       
         if(children[j].number_of_bins == L2)  
             end_time = clock();
-            Copy_Solution(global_best_solution, children[j], 0);
+            global_best_solution = Copy_Solution( children[j], 0);
             global_best_solution.fitness = children[j].fitness;;
             global_best_solution.generation = generation+1;
             global_best_solution.number_of_bins = children[j].number_of_bins;
-            .global_best_solutionfully_bins = children[j].fully_bins;
+            global_best_solution.fully_bins = children[j].fully_bins;
             TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-            WriteOutput();
+            WriteOutput(status);
             is_optimal_solution = 1;
             return 1;
         end
@@ -318,13 +290,13 @@ function Generation()
       
         if(children[j+1].number_of_bins == L2)   
             end_time = clock();
-            Copy_Solution(global_best_solution, children[j+1], 0);
+            global_best_solution = Copy_Solution( children[j+1], 0);
             global_best_solution.fitness = children[j+1].fitness;;
             global_best_solution.generation = generation+1;
             global_best_solution.number_of_bins = children[j+1].number_of_bins;
-            .global_best_solutionfully_bins = children[j+1].fully_bins;
+            global_best_solution.fully_bins = children[j+1].fully_bins;
             TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-            WriteOutput();
+            WriteOutput(status);
             is_optimal_solution = 1;
             return 1;
         end
@@ -377,13 +349,13 @@ function Generation()
           
             if(population[ordered_population[j]].number_of_bins == L2)
                 end_time = clock();
-                Copy_Solution(global_best_solution, population[ordered_population[j]], 0);
+                global_best_solution = Copy_Solution( population[ordered_population[j]], 0);
                 global_best_solution.fitness = population[ordered_population[j]].fitness;;
                 global_best_solution.generation = generation+1;
                 global_best_solution.number_of_bins = population[ordered_population[j]].number_of_bins;
-                .global_best_solutionfully_bins = population[ordered_population[j]].fully_bins;
+                global_best_solution.fully_bins = population[ordered_population[j]].fully_bins;
                 TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-                WriteOutput();
+                WriteOutput(status);
                 is_optimal_solution = 1;
                 return 1;
             end
@@ -395,13 +367,13 @@ function Generation()
             population[ordered_population[i]].fitness /= population[ordered_population[i]][number_items+1].Bin_Fullness;
             if population[ordered_population[i]][number_items+1].Bin_Fullness == L2
                 end_time = clock();
-                Copy_Solution(global_best_solution, population[ordered_population[i]], 0);
+                global_best_solution = Copy_Solution( population[ordered_population[i]], 0);
                 global_best_solution.fitness = population[ordered_population[i]].fitness;;
                 global_best_solution.generation = generation+1;
                 global_best_solution.number_of_bins = population[ordered_population[i]].number_of_bins;
-                .global_best_solutionfully_bins = population[ordered_population[i]].fully_bins;
+                global_best_solution.fully_bins = population[ordered_population[i]].fully_bins;
                 TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-                WriteOutput();
+                WriteOutput(status);
                 is_optimal_solution = 1;
                 return 1;
             end
@@ -562,7 +534,7 @@ function Adaptive_Mutation_RP( individual, float k, int is_cloned)
     end    
     
     _p_ = 1 / (float)(k);
-    number_bins = ()ceil(i*((2 - i/population[individual].number_of_bins) / pow(i,_p_))*(1 - ((double)get_rand(&seed_emptybin,()ceil((1/pow(i,_p_))*100))/100)));
+    number_bins = ceil(i*((2 - i/population[individual].number_of_bins) / pow(i,_p_))*(1 - ((double)get_rand(&seed_emptybin,()ceil((1/pow(i,_p_))*100))/100)));
     
     for i = 1:number_bins
     
@@ -620,16 +592,16 @@ function FF_n_(individual, population, number_items, bin_capacity, ordered_weigh
         Sort_Random(permutation,1, i);
 
         for j = 1:number_items - n_
-            FF(permutation[j], population[individual], total_bins, bin_i, 0);
+            FF(permutation[j], population[individual], total_bins, bin_i, false);
         end
 
-        FF(permutation[j], population[individual], total_bins, bin_i,1);
+        FF(permutation[j], population[individual], total_bins, bin_i,true);
    
     else
         Sort_Random(permutation,1, number_items);
         for j = 1:number_items-1
-            FF(permutation[j], population[individual], total_bins, bin_i,0);
-            FF(permutation[j], population[individual], total_bins, bin_i,1);
+            FF(permutation[j], population[individual], total_bins, bin_i,false);
+            FF(permutation[j], population[individual], total_bins, bin_i,true);
         end
    end
 
@@ -679,7 +651,7 @@ function RP( individual,  &b,  F[],  number_free_items)
     Sort_Random(F,0, number_free_items);
 
     for (i = 0; i < b; i+=1)
-        sum = ()population[individual][ordered_BinFullness[i]].Bin_Fullness;
+        sum = population[individual][ordered_BinFullness[i]].Bin_Fullness;
 
         p = population[individual][ordered_BinFullness[i]].w.first;
         while(p->next != NULL)
@@ -798,7 +770,7 @@ function RP( individual,  &b,  F[],  number_free_items)
     free(new_free_items);
     number_free_items += total_free;
 
-    if(higher_weight < .5*bin_capacity)
+    if(higher_.weight < 5*bin_capacity)
         Sort_Random(F,0, number_free_items);
     else
         Sort_Descending_Weights(F, number_free_items);
@@ -833,48 +805,46 @@ end
 ************************************************************************************************************************/
 """
 function FF(item,  individual,  total_bins,  beginning, is_last)
-
-  #   i;
-
-    if(!is_last && weight[item] > (bin_capacity - ()individual.highest_avaliable))
+    bin_i = beginning
+    if(!is_last && weight[item] > (bin_capacity - individual.highest_avaliable))
         i = total_bins;
     else
-        for(i = beginning; i < total_bins; i+=1)
-            if(()individual[i].Bin_Fullness + weight[item] <= bin_capacity)
+        for i = beginning:total_bins
+            if individual[i].Bin_Fullness + weight[item] <= bin_capacity
           
                 individual[i].Bin_Fullness += weight[item];
-                individual[i].w.insert(item);
-                if(()individual[i].Bin_Fullness == bin_capacity)
-                    .individualfully_bins+=1;
+                push!(individual.bins[i].w, item);
+                if(individual.bins[i].Bin_Fullness == bin_capacity)
+                    individual.fully_bins+=1;
                 end
 
                 if(is_last)
-                    for(i=i; i < total_bins; i+=1)
-                        individual.fitness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
+                    for i=i:total_bins
+                        individual.fitness += pow((individual.bins[i].Bin_Fullness / bin_capacity), 2);
                     end
                     return;
                 end
 
-                if(()individual[i].Bin_Fullness + weight[ordered_weight[number_items-1]] > bin_capacity && i == bin_i)
+                if(individual.bins[i].Bin_Fullness + weight[ordered_weight[number_items-1]] > bin_capacity && i == bin_i)
                     bin_i+=1;
-                    individual.fitness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
+                    individual.fitness += pow((individual.bins[i].Bin_Fullness / bin_capacity), 2);
                 end
                 return;
             end
         end
         if(is_last)
-            individual.fitness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
+            individual.fitness += pow((individual.bins[i].Bin_Fullness / bin_capacity), 2);
         end
     end
-    individual[i].Bin_Fullness += weight[item];
-    individual[i].w.insert(item);
+    individual.bins[i].Bin_Fullness += weight[item];
+    push!(individual.bins[i].w, item);
     
-    if(individual[i].Bin_Fullness < individual.highest_avaliable)
-        individual.highest_avaliable = individual[i].Bin_Fullness;
+    if(individual.bins[i].Bin_Fullness < individual.highest_avaliable)
+        individual.highest_avaliable = individual.bins[i].Bin_Fullness;
     end
     
     if(is_last)
-      individual.fitness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
+      individual.fitness += pow((individual.bins[i].Bin_Fullness / bin_capacity), 2);
     end
     
     total_bins+=1;
@@ -1005,10 +975,10 @@ function Find_Best_Solution()
 
     if(generation + 1 > 1)
         if(population[best_individual].fitness > global_best_solution.fitness)
-            Copy_Solution(global_best_solution, population[best_individual], 0);
+            global_best_solution = Copy_Solution( population[best_individual], 0);
         end
     else
-        Copy_Solution(global_best_solution, population[best_individual], 0);
+        global_best_solution = Copy_Solution( population[best_individual], 0);
     end
 end
 
@@ -1168,39 +1138,11 @@ end
   A value that indicates if the copied solution must be deleted: delete_solution2                         *
 ************************************************************************************************************************/
 """
-function Copy_Solution(Solution solution[], Solution solution2[], int delete_solution2)
- 
-  #   j;
+function Copy_Solution(solution2, status, delete_solution2)
+    solution = deepcopy(solution2)
+    solution.generation = status.generation;
 
-   for(j = 0; j < solution2.number_of_bins; j+=1)
-   
-        solution[j].Bin_Fullness = solution2[j].Bin_Fullness;
-        solution[j].w.clone_linked_list(solution2[j].w);
-        if(delete_solution2)
-            solution2[j].Bin_Fullness = 0;
-            solution2[j].w.free_linked_list();
-        end
-
-    end
-    
-    while(j < solution.number_of_bins)
-        solution[j].Bin_Fullness = 0;
-        solution[j+=1].w.free_linked_list();
-    end
-
-    solution.fitness = solution2.fitness;
-    solution.number_of_bins = solution2.number_of_bins;
-    solution.generation = solution2.generation;
-    .solutionfully_bins = .solution2fully_bins;
-    solution.highest_avaliable = solution2.highest_avaliable;
-   
-    if(delete_solution2)
-        solution2.fitness = 0;
-        solution2.number_of_bins = 0;
-        solution2.generation = 0;
-        .solution2fully_bins = 0;
-        solution2.highest_avaliable = 0;
-    end
+    return solution
 
 end
 
