@@ -6,10 +6,10 @@ GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING
 /************************************************************************************************************************
  Author:  Marcela Quiroz-Castellanos                                                          *
       qc.marcela@gmail.com                                                                            *
-         Tecnológico Nacional de México                                                                 *
-         Instituto Tecnológico de Ciudad Madero                                                         *
-         División de Estudios de Posgrado e Investigación                                               *
-         Depto. de Sistemas y Computación                                                               *
+         TecnolÃ³gico Nacional de MÃ©xico                                                                 *
+         Instituto TecnolÃ³gico de Ciudad Madero                                                         *
+         DivisiÃ³n de Estudios de Posgrado e InvestigaciÃ³n                                               *
+         Depto. de Sistemas y ComputaciÃ³n                                                               *
 ************************************************************************************************************************/
 /************************************************************************************************************************
  The program excecutes GGA-CGT over a set instances using different configurations                          *
@@ -17,7 +17,7 @@ GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING
                                                                                 *
  Reference:                                                                                                   *
     Quiroz-Castellanos, M., Cruz-Reyes, L., Torres-Jimenez, J.,                                     *
-    Gómez, C., Huacuja, H. J. F., & Alvim, A. C. (2015).                                          *
+    GÃ³mez, C., Huacuja, H. J. F., & Alvim, A. C. (2015).                                          *
       A grouping genetic algorithm with controlled gene transmission for                                *
       the bin packing problem. Computers & Operations Research, 55, 52-64.                                *
                                                                                                           *
@@ -33,17 +33,11 @@ GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING
    obtained solution for each instance, for each configuration i, stored in directory: Details_GGA-CGT;           *
 ************************************************************************************************************************/
 """
-#include "linked_list.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <time.h>
 
 
 # CONSTANTS DEFINING THE SIZE OF THE PROBLEM
-#define ATTRIBUTES          5000
-#define P_size_MAX            500
+const ATTRIBUTES = 5000
+const P_size_MAX = 500
 
 # char
 #   file[300],
@@ -118,7 +112,7 @@ end
 # long int Generation();
 # void  Gene_Level_Crossover_FFD(long int, long int, long int);
 # void  Adaptive_Mutation_RP(long int, float, int);
-# void  FF_n_(int); # First Fit with ñ pre-allocated-items (FF-ñ)
+# void  FF_n_(int); # First Fit with Ã± pre-allocated-items (FF-Ã±)
 # void  RP(long int, long int &, long int[], long int); # Rearrangement by Pairs
 
 # # BPP Procedures
@@ -146,102 +140,108 @@ end
 # float randp(int *);
 # int trand();
 
+import CSV
+
 function main ()
 
-  char  aux[300], nombreC[300], string[300];
-   system("mkdir Solutions_GGA-CGT");
-   system("mkdir Details_GGA-CGT");
-
-   # READING EACH CONFIGURATION IN FILE "configurations.txt", CONTAINING THE PARAMETER VALUES FOR EACH EXPERIMENT
-   if((input_Configurations = fopen("configurations.txt","rt")) == NULL)
-     printf("\n INVALID FILE");
-      # getch();
-      exit(1);
-   end
-   fscanf(input_Configurations,"%[^\n]",string);
-  while(!feof(input_Configurations))
-  
-    fscanf(input_Configurations,"%ld",&conf);
-      strcpy(nameC, "Solutions_GGA-CGT/GGA-CGT_(");
-      # itoa(conf, aux, 10);
-      sprintf(aux,"%ld", conf);
-      strcat(nameC, aux);
-      strcat(nameC, ").txt");
-      output = fopen(nameC,"w+");
-      fscanf(input_Configurations,"%d",&P_size);
-    fscanf(input_Configurations,"%d",&max_gen);
-      fscanf(input_Configurations,"%f",&p_m);
-      fscanf(input_Configurations,"%f",&p_c);
-      fscanf(input_Configurations,"%f",&k_ncs);
-      fscanf(input_Configurations,"%f",&k_cs);
-      fscanf(input_Configurations,"%f",&B_size);
-    fscanf(input_Configurations,"%d",&life_span);
-      fscanf(input_Configurations,"%d",&seed);
-      fscanf(input_Configurations,"%d",&save_bestSolution);
-      fprintf(output, "CONF\t|P|\tmax_gen\tn_m\tn_c\tk1(non-cloned_solutions)\tk2(cloned_solutions)\t|B|\tlife_span\tseed");
-      fprintf(output, "\n%ld\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%d\t%d",conf,P_size,max_gen,p_m,p_c,k_ncs,k_cs,B_size,life_span,seed);
-     fprintf(output, "\nInstancias \t L2 \t Bins \t Gen \t Time");
-    fclose(output);
-
-    # READING FILE "instances.txt" CONTAINING THE NAME OF BPP INSTANCES TO PROCESS
-      if((input_Instances = fopen("instances.txt","rt")) == NULL)
-       printf("\n INVALID FILE");
-       # getch();
-        exit(1);
-       end
-    while(!feof(input_Instances))
-      fscanf(input_Instances,"%s",file);
-      LoadData();
-
-      for i = 1:number_items
-        ordered_weight[i] = i;
-      end
-
-      Sort_Descending_Weights(ordered_weight, number_items);
-      LowerBound();
-        seed_permutation = seed;
-         seed_emptybin = seed;
-         for i = 1:P_size
-            ordered_population[i] = i;
-            random_individuals[i] = i;
-            best_individuals[i] = i;
-         end
-
-      Clean_population();
-      is_optimal_solution = 0;
-         generation = 0;
-         j = n_
-         i = 0
-         for j = 1:number_items 
-            permutation[i] = ordered_weight[j];
-            i++
-         end
-         
-         repeated_fitness = 0;
-         # procedure GGA-CGT
-         start = clock();
-         if !Generate_Initial_Population()  # Generate_Initial_Population() returns 1 if an optimal solution was found
-           for generation = 1:max_gen)
-              if Generation() # Generation() returns 1 if an optimal solution was found
-                  break;
-              end
-              Find_Best_Solution();
-            end
-         
-        if(!is_optimal_solution) # is_optimal_solution is 1 if an optimal solution was printed before
-          end_time = clock();
-          TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-              Find_Best_Solution();
-            WriteOutput();
-        end
+    # char  aux[300], nombreC[300], mystring[300];
+    try
+        mkdir("Solutions_GGA-CGT");
+        mkdir("Details_GGA-CGT");
     end
 
-    fclose(input_Instances);
-  end
+    # READING EACH CONFIGURATION IN FILE "configurations.txt", CONTAINING THE PARAMETER VALUES FOR EACH EXPERIMENT
+    input_Configurations = nothing
+    try
+        input_Configurations = CSV.File("configurations.txt")
+    catch
+        print("\n INVALID FILE");
+        return false
+    end
+     
+    for nconf = length(input_Configurations)
+        conf = input_Configurations.conf[1]
+        P_size = input_Configurations.P_size[1]
+        max_gen = input_Configurations.max_gen[1]
+        p_m = input_Configurations.p_m[1]
+        p_c = input_Configurations.p_c[1]
+        k_ncs = input_Configurations.k_ncs[1]
+        k_cs = input_Configurations.k_cs[1]
+        B_size = input_Configurations.B_size[1]
+        life_span = input_Configurations.life_span[1]
+        seed = input_Configurations.seed[1]
+        save_bestSolution = input_Configurations.save_bestSolution[1]
+        
+        nameC = string("Solutions_GGA-CGT/GGA-CGT_(", conf, ").txt");
+        open(nameC,"w+") do output
+            write(output , "CONF\t|P|\tmax_gen\tn_m\tn_c\tk1(non-cloned_solutions)\tk2(cloned_solutions)\t|B|\tlife_span\tseed");
+            write(output, "\n$conf\t$P_size\t$max_gen\t$p_m\tp_c\t$k_ncs\t$k_cs\t$B_size\t$life_span\t$seed");
+            write(output, "\nInstancias \t L2 \t Bins \t Gen \t Time");
+        end
+        
+        # input_Instances = nothing
+        # # READING FILE "instances.txt" CONTAINING THE NAME OF BPP INSTANCES TO PROCESS
+        # try
+        #     input_Instances = open("instances.txt","rt")
+        # catch
+        #     print("\n INVALID FILE");
+        #     # getch();
+        #     return 1;
+        # end
 
-  fclose(input_Configurations);
-  printf("\n\n\tEnd of process");
-  getchar();
+        for file in readlines("instances.txt")
+            LoadData();
+
+            for i = 1:number_items
+                ordered_weight[i] = i;
+            end
+
+            Sort_Descending_Weights(ordered_weight, number_items);
+            LowerBound();
+            seed_permutation = seed;
+            seed_emptybin = seed;
+            
+            for i = 1:P_size
+                ordered_population[i] = i;
+                random_individuals[i] = i;
+                best_individuals[i] = i;
+            end
+
+            Clean_population();
+            is_optimal_solution = 0;
+            generation = 0;
+            j = n_
+            i = 0
+
+            for j = 1:number_items 
+                permutation[i] = ordered_weight[j];
+                i+=1
+            end
+             
+            repeated_fitness = 0;
+            # procedure GGA-CGT
+            start = clock();
+            if !Generate_Initial_Population()  # Generate_Initial_Population() returns 1 if an optimal solution was found
+                for generation = 1:max_gen)
+                    if Generation() # Generation() returns 1 if an optimal solution was found
+                        break;
+                    end
+                    Find_Best_Solution();
+                end
+                if(!is_optimal_solution) # is_optimal_solution is 1 if an optimal solution was printed before
+                    end_time = clock();
+                    TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
+                    Find_Best_Solution();
+                    WriteOutput();
+                end
+            end
+
+        end
+        fclose(input_Instances);
+    end
+    fclose(input_Configurations);
+    print("\n\n\tEnd of process");
+    getchar();
 
   return 0;
 end
@@ -250,7 +250,7 @@ end
 
 """
 /************************************************************************************************************************
- To generate an initial population P of individuals with FF-ñ packing heuristic.                            *
+ To generate an initial population P of individuals with FF-Ã± packing heuristic.                            *
   population[i][number_items].Bin_Fullness: Saves the fitness of the solution i                                         *
   population[i][number_items + 1].Bin_Fullness:                                                                         *
   Saves the total number of bins in the solution i                                                                      *
@@ -266,24 +266,27 @@ end
 ************************************************************************************************************************/
 """
 function Generate_Initial_Population()
-  for i = 1:P_size
-     FF_n_(i);
+    for i = 1:P_size
+        FF_n_(i);
         population[i][number_items + 2].Bin_Fullness = generation;
-      population[i][number_items].Bin_Fullness /= population[i][number_items + 1].Bin_Fullness;
+        population[i][number_items].Bin_Fullness /= population[i][number_items + 1].Bin_Fullness;
+        
         if(population[i][number_items + 1].Bin_Fullness == L2)
-             end_time = clock();
-              Copy_Solution(global_best_solution, population[i], 0);
-              global_best_solution[number_items].Bin_Fullness = population[i][number_items].Bin_Fullness;;
+            end_time = clock();
+            Copy_Solution(global_best_solution, population[i], 0);
+            global_best_solution[number_items].Bin_Fullness = population[i][number_items].Bin_Fullness;;
             global_best_solution[number_items + 2].Bin_Fullness = generation;
             global_best_solution[number_items + 1].Bin_Fullness = population[i][number_items + 1].Bin_Fullness;
-              global_best_solution[number_items + 3].Bin_Fullness = population[i][number_items + 3].Bin_Fullness;
+            global_best_solution[number_items + 3].Bin_Fullness = population[i][number_items + 3].Bin_Fullness;
             TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
             WriteOutput();
-              is_optimal_solution = 1;
-            return (1);
+            is_optimal_solution = 1;
+            return 1;
         end
-  end
-   return 0;
+    
+    end
+    
+    return 0;
 end
 
 
@@ -306,140 +309,141 @@ function Generation()
     #   k;
 
    """
-   /*-----------------------------------------------------------------------------------------------------
-   ---------------------------------Controlled selection for crossover------------------------------------
-   -----------------------------------------------------------------------------------------------------*/
+   /*****************************************************************************************************-
+   ********************************-Controlled selection for crossover************************************
+   ****************************************************************************************************-*/
    """
-  Sort_Ascending_IndividualsFitness();
-   # if(generation > 1 && repeated_fitness > 0.1*P_size)
-  #   return (2);
-   Sort_Random(random_individuals,0,(int)(P_size-(int)(P_size*B_size)));
-   Sort_Random(best_individuals,(1-p_c)*P_size,P_size);
-   k = 0;
-   h = P_size - 1;
-   i = P_size - 1; j = 0
+    Sort_Ascending_IndividualsFitness();
+    # if(generation > 1 && repeated_fitness > 0.1*P_size)
+    #   return(2);
+    Sort_Random(random_individuals,0,(int)(P_size-(int)(P_size*B_size)));
+    Sort_Random(best_individuals,(1-p_c)*P_size,P_size);
+    k = 0;
+    h = P_size - 1;
+    i = P_size - 1; j = 0
    
-   while (i > P_size - (p_c/2*P_size))
+    while (i > P_size - (p_c/2*P_size))
+        f1 = best_individuals[h-=1];
+        f2 = random_individuals[k+=1];
       
-      f1 = best_individuals[h--];
-      f2 = random_individuals[k++];
+        if f2 == f1
+            f1 = best_individuals[h-=1];
+        end
       
-      if f2 == f1
-        f1 = best_individuals[h--];
-      end
+        Gene_Level_Crossover_FFD(ordered_population[f1], ordered_population[f2], j);
+        children[j][number_items + 2].Bin_Fullness = generation + 1;
+        children[j][number_items].Bin_Fullness /= children[j][number_items+1].Bin_Fullness;
       
-      Gene_Level_Crossover_FFD(ordered_population[f1], ordered_population[f2], j);
-      children[j][number_items + 2].Bin_Fullness = generation + 1;
-      children[j][number_items].Bin_Fullness /= children[j][number_items+1].Bin_Fullness;
-      
-      if(children[j][number_items + 1].Bin_Fullness == L2)  
-          end_time = clock();
-          Copy_Solution(global_best_solution, children[j], 0);
-            global_best_solution[number_items].Bin_Fullness = children[j][number_items].Bin_Fullness;;
-          global_best_solution[number_items + 2].Bin_Fullness = generation+1;
-          global_best_solution[number_items + 1].Bin_Fullness = children[j][number_items + 1].Bin_Fullness;
-            global_best_solution[number_items + 3].Bin_Fullness = children[j][number_items + 3].Bin_Fullness;
-          TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-          WriteOutput();
-            is_optimal_solution = 1;
-          return (1);
-      end
-      
-      Gene_Level_Crossover_FFD(ordered_population[f2], ordered_population[f1], j+1);
-      children[j+1][number_items + 2].Bin_Fullness = generation + 1;
-      children[j+1][number_items].Bin_Fullness /= children[j+1][number_items+1].Bin_Fullness;
-      
-      if(children[j+1][number_items + 1].Bin_Fullness == L2)   
-          end_time = clock();
-          Copy_Solution(global_best_solution, children[j+1], 0);
-            global_best_solution[number_items].Bin_Fullness = children[j+1][number_items].Bin_Fullness;;
-          global_best_solution[number_items + 2].Bin_Fullness = generation+1;
-          global_best_solution[number_items + 1].Bin_Fullness = children[j+1][number_items + 1].Bin_Fullness;
-            global_best_solution[number_items + 3].Bin_Fullness = children[j+1][number_items + 3].Bin_Fullness;
-          TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-          WriteOutput();
-            is_optimal_solution = 1;
-            return (1);
-     end
-     i--; j+=2
-   end
-
-   """
-   /*-----------------------------------------------------------------------------------------------------
-   ---------------------------------Controlled replacement for crossover----------------------------------
-   -----------------------------------------------------------------------------------------------------*/
-   """
-   k = 0;
-   for j = 1:p_c/2*P_size - 1
-      Copy_Solution(population[ordered_population[random_individuals[k]]], children[j], 1);
-      k++
-   end
-
-   k = 0;
-
-   for(i = P_size - 1; i > P_size - (p_c/2*P_size); i--, j++)
-      while population[ordered_population[k]][number_items + 2].Bin_Fullness == generation + 1
-          k++;
-      end
-      Copy_Solution(population[ordered_population[k++]], children[j], 1);
-   end
-    """
-    /*-----------------------------------------------------------------------------------------------------
-   --------------------------------Controlled selection for mutation--------------------------------------
-   -----------------------------------------------------------------------------------------------------*/
-   """
-  Sort_Ascending_IndividualsFitness();
-   # if(generation > 1 && repeated_fitness > 0.1*P_size)
-  #   return (2);
-   j = 0;
-   for i = reverse(1:(P_size - (p_m*P_size)))
-  
-      if(j < P_size*B_size && generation+ 1 - population[ordered_population[i]][number_items + 2].Bin_Fullness < life_span)
-      
-          """
-          /*-----------------------------------------------------------------------------------------------------
-          ----------------------------------Controlled replacement for mutation----------------------------------
-          -----------------------------------------------------------------------------------------------------*/
-          """
-          Copy_Solution(population[ordered_population[j]], population[ordered_population[i]], 0);
-          Adaptive_Mutation_RP(ordered_population[j], k_cs, 1);
-          population[ordered_population[j]][number_items + 2].Bin_Fullness = generation + 1;
-          population[ordered_population[j]][number_items].Bin_Fullness /= population[ordered_population[j]][number_items+1].Bin_Fullness;
-          
-          if(population[ordered_population[j]][number_items + 1].Bin_Fullness == L2)
-              end_time = clock();
-              Copy_Solution(global_best_solution, population[ordered_population[j]], 0);
-              global_best_solution[number_items].Bin_Fullness = population[ordered_population[j]][number_items].Bin_Fullness;;
-              global_best_solution[number_items + 2].Bin_Fullness = generation+1;
-              global_best_solution[number_items + 1].Bin_Fullness = population[ordered_population[j]][number_items + 1].Bin_Fullness;
-              global_best_solution[number_items + 3].Bin_Fullness = population[ordered_population[j]][number_items + 3].Bin_Fullness;
-              TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
-              WriteOutput();
-              is_optimal_solution = 1;
-              return (1);
-          end
-          
-             j++;
-    else
-        Adaptive_Mutation_RP(ordered_population[i], k_ncs, 0);
-        population[ordered_population[i]][number_items + 2].Bin_Fullness = generation + 1;
-        population[ordered_population[i]][number_items].Bin_Fullness /= population[ordered_population[i]][number_items+1].Bin_Fullness;
-        if population[ordered_population[i]][number_items+1].Bin_Fullness == L2
+        if(children[j][number_items + 1].Bin_Fullness == L2)  
             end_time = clock();
-            Copy_Solution(global_best_solution, population[ordered_population[i]], 0);
-            global_best_solution[number_items].Bin_Fullness = population[ordered_population[i]][number_items].Bin_Fullness;;
+            Copy_Solution(global_best_solution, children[j], 0);
+            global_best_solution[number_items].Bin_Fullness = children[j][number_items].Bin_Fullness;;
             global_best_solution[number_items + 2].Bin_Fullness = generation+1;
-            global_best_solution[number_items + 1].Bin_Fullness = population[ordered_population[i]][number_items + 1].Bin_Fullness;
-            global_best_solution[number_items + 3].Bin_Fullness = population[ordered_population[i]][number_items + 3].Bin_Fullness;
+            global_best_solution[number_items + 1].Bin_Fullness = children[j][number_items + 1].Bin_Fullness;
+            global_best_solution[number_items + 3].Bin_Fullness = children[j][number_items + 3].Bin_Fullness;
             TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
             WriteOutput();
             is_optimal_solution = 1;
-            return (1);
+            return 1;
+        end
+      
+        Gene_Level_Crossover_FFD(ordered_population[f2], ordered_population[f1], j+1);
+        children[j+1][number_items + 2].Bin_Fullness = generation + 1;
+        children[j+1][number_items].Bin_Fullness /= children[j+1][number_items+1].Bin_Fullness;
+      
+        if(children[j+1][number_items + 1].Bin_Fullness == L2)   
+            end_time = clock();
+            Copy_Solution(global_best_solution, children[j+1], 0);
+            global_best_solution[number_items].Bin_Fullness = children[j+1][number_items].Bin_Fullness;;
+            global_best_solution[number_items + 2].Bin_Fullness = generation+1;
+            global_best_solution[number_items + 1].Bin_Fullness = children[j+1][number_items + 1].Bin_Fullness;
+            global_best_solution[number_items + 3].Bin_Fullness = children[j+1][number_items + 3].Bin_Fullness;
+            TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
+            WriteOutput();
+            is_optimal_solution = 1;
+            return 1;
+        end
+        
+        i-=1; j+=2
+    end
+
+    """
+    /*****************************************************************************************************-
+    ********************************-Controlled replacement for crossover**********************************
+    ****************************************************************************************************-*/
+    """
+    k = 0;
+    for j = 1:p_c/2*P_size - 1
+        Copy_Solution(population[ordered_population[random_individuals[k]]], children[j], 1);
+        k+=1
+    end
+
+    k = 0;
+
+   for(i = P_size - 1; i > P_size - (p_c/2*P_size); i-=1, j+=1)
+        while population[ordered_population[k]][number_items + 2].Bin_Fullness == generation + 1
+            k+=1;
+        end
+        Copy_Solution(population[ordered_population[k+=1]], children[j], 1);
+   end
+    
+    """
+    /*****************************************************************************************************-
+    ********************************Controlled selection for mutation**************************************
+    ****************************************************************************************************-*/
+    """
+    Sort_Ascending_IndividualsFitness();
+    # if(generation > 1 && repeated_fitness > 0.1*P_size)
+    #   return (2);
+    j = 0;
+    for i = reverse(1:(P_size - (p_m*P_size)))
+  
+        if(j < P_size*B_size && generation+ 1 - population[ordered_population[i]][number_items + 2].Bin_Fullness < life_span)
+      
+            """
+            /*****************************************************************************************************-
+            **********************************Controlled replacement for mutation**********************************
+            ****************************************************************************************************-*/
+            """
+            Copy_Solution(population[ordered_population[j]], population[ordered_population[i]], 0);
+            Adaptive_Mutation_RP(ordered_population[j], k_cs, 1);
+            population[ordered_population[j]][number_items + 2].Bin_Fullness = generation + 1;
+            population[ordered_population[j]][number_items].Bin_Fullness /= population[ordered_population[j]][number_items+1].Bin_Fullness;
+          
+            if(population[ordered_population[j]][number_items + 1].Bin_Fullness == L2)
+                end_time = clock();
+                Copy_Solution(global_best_solution, population[ordered_population[j]], 0);
+                global_best_solution[number_items].Bin_Fullness = population[ordered_population[j]][number_items].Bin_Fullness;;
+                global_best_solution[number_items + 2].Bin_Fullness = generation+1;
+                global_best_solution[number_items + 1].Bin_Fullness = population[ordered_population[j]][number_items + 1].Bin_Fullness;
+                global_best_solution[number_items + 3].Bin_Fullness = population[ordered_population[j]][number_items + 3].Bin_Fullness;
+                TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
+                WriteOutput();
+                is_optimal_solution = 1;
+                return 1;
+            end
+          
+            j+=1;
+        else
+            Adaptive_Mutation_RP(ordered_population[i], k_ncs, 0);
+            population[ordered_population[i]][number_items + 2].Bin_Fullness = generation + 1;
+            population[ordered_population[i]][number_items].Bin_Fullness /= population[ordered_population[i]][number_items+1].Bin_Fullness;
+            if population[ordered_population[i]][number_items+1].Bin_Fullness == L2
+                end_time = clock();
+                Copy_Solution(global_best_solution, population[ordered_population[i]], 0);
+                global_best_solution[number_items].Bin_Fullness = population[ordered_population[i]][number_items].Bin_Fullness;;
+                global_best_solution[number_items + 2].Bin_Fullness = generation+1;
+                global_best_solution[number_items + 1].Bin_Fullness = population[ordered_population[i]][number_items + 1].Bin_Fullness;
+                global_best_solution[number_items + 3].Bin_Fullness = population[ordered_population[i]][number_items + 3].Bin_Fullness;
+                TotalTime = (end_time - start) / (CLOCKS_PER_SEC * 1.0);
+                WriteOutput();
+                is_optimal_solution = 1;
+                return 1;
+            end
         end
     end
-  end
-  
-  return 0;
+    
+    return 0;
 end
 
 
@@ -462,83 +466,80 @@ function Gene_Level_Crossover_FFD(long int father_1, long int father_2, long int
  #         free_items[ATTRIBUTES] = {0};
  #   children[child][number_items + 4].Bin_Fullness = bin_capacity;
 
-   if(population[father_1][number_items + 1].Bin_Fullness > population[father_2][number_items + 1].Bin_Fullness)
-    counter = population[father_1][number_items + 1].Bin_Fullness;
-   else
-    counter = population[father_2][number_items + 1].Bin_Fullness;
-   end
+    if(population[father_1][number_items + 1].Bin_Fullness > population[father_2][number_items + 1].Bin_Fullness)
+        counter = population[father_1][number_items + 1].Bin_Fullness;
+    else
+        counter = population[father_2][number_items + 1].Bin_Fullness;
+    end
 
-   long int *random_order1 = new long int [counter];
-   long int *random_order2 = new long int [counter];
+    long int *random_order1 = new long int [counter];
+    long int *random_order2 = new long int [counter];
 
 
-   for(k = 1:counter)
-      random_order1[k] = k;
-      random_order2[k] = k;
-   end
+    for(k = 1:counter)
+        random_order1[k] = k;
+        random_order2[k] = k;
+    end
 
-  Sort_Random(random_order1,0, population[father_1][number_items + 1].Bin_Fullness);
-  Sort_Random(random_order2,0, population[father_2][number_items + 1].Bin_Fullness);
-  Sort_Descending_BinFullness(random_order1, father_1);
-  Sort_Descending_BinFullness(random_order2, father_2);
+    Sort_Random(random_order1,0, population[father_1][number_items + 1].Bin_Fullness);
+    Sort_Random(random_order2,0, population[father_2][number_items + 1].Bin_Fullness);
+    Sort_Descending_BinFullness(random_order1, father_1);
+    Sort_Descending_BinFullness(random_order2, father_2);
 
-   for(k = 1:population[father_1][number_items + 1].Bin_Fullness)
+    for(k = 1:population[father_1][number_items + 1].Bin_Fullness)
    
-    if(population[father_1][random_order1[k]].Bin_Fullness >= population[father_2][random_order2[k]].Bin_Fullness)
-      ban = Used_Items(father_1, random_order1[k], items);
-      if (ban == 1)
-        children[child][k2].L.clone_linked_list(population[father_1][random_order1[k]].L);
-        children[child][k2++].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
-        
-        if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
-            children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
-        end
-        
-        if(population[father_2][random_order2[k]].Bin_Fullness > 0)
-         
-          ban = Used_Items(father_2, random_order2[k], items);
-          if (ban == 1)
+        if(population[father_1][random_order1[k]].Bin_Fullness >= population[father_2][random_order2[k]].Bin_Fullness)
             
-            children[child][k2].L.clone_linked_list(population[father_2][random_order2[k]].L);
-            children[child][k2++].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
-            
-            if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
-               children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
-            end
-         
-         end
-
-      
-      else
-    
-        if(population[father_2][random_order2[k]].Bin_Fullness > 0)
-            ban = Used_Items(father_2, random_order2[k], items);
+            ban = Used_Items(father_1, random_order1[k], items);
             if (ban == 1)
-                children[child][k2].L.clone_linked_list(population[father_2][random_order2[k]].L);
-                children[child][k2++].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
-                
+                children[child][k2].L.clone_linked_list(population[father_1][random_order1[k]].L);
+                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+            
                 if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
                     children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
                 end
             end
-         end
+            
+            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+                ban = Used_Items(father_2, random_order2[k], items);
+                if (ban == 1)
+                    children[child][k2].L.clone_linked_list(population[father_2][random_order2[k]].L);
+                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
 
-         ban = Used_Items(father_1, random_order1[k], items);
-         if (ban == 1)
-          
-            children[child][k2].L.clone_linked_list(population[father_1][random_order1[k]].L);
-            children[child][k2++].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
-            if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
-                children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
+                    if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
+                        children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
+                    end
+                end
             end
-      end
-   end
+        else
+            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+                ban = Used_Items(father_2, random_order2[k], items);
+                if (ban == 1)
+                    children[child][k2].L.clone_linked_list(population[father_2][random_order2[k]].L);
+                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
+                    
+                    if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
+                        children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
+                    end
+                end
+            end
+
+            ban = Used_Items(father_1, random_order1[k], items);
+            if (ban == 1)
+                children[child][k2].L.clone_linked_list(population[father_1][random_order1[k]].L);
+                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+                if(children[child][k2-1].Bin_Fullness < children[child][number_items + 4].Bin_Fullness)
+                    children[child][number_items + 4].Bin_Fullness = children[child][k2-1].Bin_Fullness;
+                end
+            end
+        end
+    end
 
 
     k = 0;
-    for(counter = 0; counter < number_items; counter++)
+    for(counter = 0; counter < number_items; counter+=1)
         if(items[ordered_weight[counter]] == 0)
-            free_items [k++] = ordered_weight[counter];
+            free_items [k+=1] = ordered_weight[counter];
         end
     end
    
@@ -549,7 +550,7 @@ function Gene_Level_Crossover_FFD(long int father_1, long int father_2, long int
             FF(free_items[counter], children[child], k2, bin_i,1);
         end
     else
-        for(k = 0; k < k2; k++)
+        for(k = 0; k < k2; k+=1)
             children[child][number_items].Bin_Fullness += pow((children[child][k].Bin_Fullness / bin_capacity), 2);
         end
     end
@@ -592,7 +593,7 @@ function Adaptive_Mutation_RP(long int individual, float k, int is_cloned)
     i = 1;
     
     while(population[individual][ordered_BinFullness[i]].Bin_Fullness < bin_capacity && i < population[individual][number_items + 1].Bin_Fullness)
-        i++;
+        i+=1;
     end    
     
     _p_ = 1 / (float)(k);
@@ -603,13 +604,13 @@ function Adaptive_Mutation_RP(long int individual, float k, int is_cloned)
         p = population[individual][ordered_BinFullness[lightest_bin]].L.first;
 
         while(p != NULL)
-            free_items[number_free_items++] = p->data;
+            free_items[number_free_items+=1] = p->data;
             p = p->next;
         end
 
         population[individual][ordered_BinFullness[lightest_bin]].L.free_linked_list();
         population[individual][ordered_BinFullness[lightest_bin]].Bin_Fullness = 0;
-        lightest_bin++;
+        lightest_bin+=1;
     end
  
     population[individual][number_items + 1].Bin_Fullness -= number_bins;
@@ -625,7 +626,7 @@ end
 
 """
 /************************************************************************************************************************
- To generate a random BPP solution with the ñ large items packed in separate bins.                          *
+ To generate a random BPP solution with the Ã± large items packed in separate bins.                          *
  Input:                                                                                                         *
   The position in the population of the new solution: individual                                    *
 ************************************************************************************************************************/
@@ -643,7 +644,7 @@ function FF_n_(int individual)
         for i = 1:n_
             population[individual][i].Bin_Fullness = weight[ordered_weight[i]];
             population[individual][i].L.insert(ordered_weight[i]);
-            total_bins++;
+            total_bins+=1;
 
             if(population[individual][i].Bin_Fullness < population[individual][number_items + 4].Bin_Fullness)
                 population[individual][number_items + 4].Bin_Fullness = population[individual][i].Bin_Fullness;
@@ -652,14 +653,14 @@ function FF_n_(int individual)
     
         i = number_items - i;
         Sort_Random(permutation,0, i);
-        for(j = 0; j < i-1; j++)
+        for(j = 0; j < i-1; j+=1)
             FF(permutation[j], population[individual], total_bins, bin_i,0);
         end
         FF(permutation[j], population[individual], total_bins, bin_i,1);
    
     else
         Sort_Random(permutation,0, number_items);
-        for(j = 0; j < number_items-1; j++)
+        for(j = 0; j < number_items-1; j+=1)
             FF(permutation[j], population[individual], total_bins, bin_i,0);
             FF(permutation[j], population[individual], total_bins, bin_i,1);
         end
@@ -703,106 +704,111 @@ function RP(long int individual, long int &b, long int F[], long int number_free
    population[individual][number_items + 3].Bin_Fullness = 0;
    population[individual][number_items + 4].Bin_Fullness = bin_capacity;
 
-    for (i = 0; i < b; i++ )
+    for (i = 0; i < b; i+=1 )
         ordered_BinFullness[i] = i;
     end
     
     Sort_Random(ordered_BinFullness,0, b);
     Sort_Random(F,0, number_free_items);
 
-    for (i = 0; i < b; i++)
+    for (i = 0; i < b; i+=1)
         sum = (long int)population[individual][ordered_BinFullness[i]].Bin_Fullness;
-    end
 
-    p = population[individual][ordered_BinFullness[i]].L.first;
-    while(p->next != NULL)
-        ban = 0;
-        aux = p;
-        s = p->next;
-        while(s != NULL)       
-            for (k = 0; k < number_free_items - 1; k++)
-              if(i == b-1)
-                    if(weight[F[k]] > higher_weight)
-                        higher_weight = weight[F[k]];
-                    end
-                for (k2 = k + 1; k2 < number_free_items; k2++)
-                    if(weight[F[k]] >= weight[p->data] + weight[s->data] && ((sum - (weight[p->data] + weight[s->data]) + (weight[F[k]]) <= bin_capacity)))
-                        sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k]]);
-                        new_free_items[0] = p->data;
-                        new_free_items[1] = s->data;
-                        p->data = F[k];
-                        aux->next = s->next;
-                        free(s);
-                        
-                        if(population[individual][ordered_BinFullness[i]].L.last == s)
-                            population[individual][ordered_BinFullness[i]].L.last = aux;
+        p = population[individual][ordered_BinFullness[i]].L.first;
+        while(p->next != NULL)
+            ban = 0;
+            aux = p;
+            s = p->next;
+            while(s != NULL)       
+                for (k = 0; k < number_free_items - 1; k+=1)
+                    if(i == b-1)
+                        if(weight[F[k]] > higher_weight)
+                            higher_weight = weight[F[k]];
                         end
-                        
-                        population[individual][ordered_BinFullness[i]].L.num--;
-                        F[k] = new_free_items[0];
-                        F[number_free_items + total_free] = new_free_items[1];
-                        total_free++;
-                        ban = 1;
-                        break;
                     end
-
-                    if(weight[F[k2]] >= weight[p->data] + weight[s->data] && ((sum - (weight[p->data] + weight[s->data]) + (weight[F[k2]]) <= bin_capacity)))
-                        sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k2]]);
-                        new_free_items[0] = p->data;
-                        new_free_items[1] = s->data;
-                        p->data = F[k2];
-                        aux->next = s->next;
-                        free(s);
-                        
-                        if(population[individual][ordered_BinFullness[i]].L.last == s)
-                            population[individual][ordered_BinFullness[i]].L.last = aux;
-                        end
-
-                        population[individual][ordered_BinFullness[i]].L.num--;
-                        F[k2] = new_free_items[0];
-                        F[number_free_items + total_free] = new_free_items[1];
-                        total_free++;
-                        ban = 1;
-                        break;
-
-                    end
-
-                    if((weight[F[k]] + weight[F[k2]] > weight[p->data] + weight[s->data]) || ((weight[F[k]] + weight[F[k2]] == weight[p->data] + weight[s->data]) && !(weight[F[k]] == weight[p->data] || weight[F[k]] == weight[s->data])))
-                      
-                        if(sum - (weight[p->data] + weight[s->data]) + (weight[F[k]] + weight[F[k2]]) > bin_capacity)
-                            break;
-                        end
-                    
-                        sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k]] + weight[F[k2]]);
-                        new_free_items[0] = p->data;
-                        new_free_items[1] = s->data;
-                        p->data = F[k];
-                        s->data = F[k2];
-                        F[k] = new_free_items[0];
-                        F[k2] = new_free_items[1];
-                        if(sum == bin_capacity)
+                    for (k2 = k + 1; k2 < number_free_items; k2+=1)
+                        if(weight[F[k]] >= weight[p->data] + weight[s->data] && ((sum - (weight[p->data] + weight[s->data]) + (weight[F[k]]) <= bin_capacity)))
+                            sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k]]);
+                            new_free_items[0] = p->data;
+                            new_free_items[1] = s->data;
+                            p->data = F[k];
+                            aux->next = s->next;
+                            free(s);
+                            
+                            if(population[individual][ordered_BinFullness[i]].L.last == s)
+                                population[individual][ordered_BinFullness[i]].L.last = aux;
+                            end
+                            
+                            population[individual][ordered_BinFullness[i]].L.num-=1;
+                            F[k] = new_free_items[0];
+                            F[number_free_items + total_free] = new_free_items[1];
+                            total_free+=1;
                             ban = 1;
                             break;
                         end
+
+                        if(weight[F[k2]] >= weight[p->data] + weight[s->data] && ((sum - (weight[p->data] + weight[s->data]) + (weight[F[k2]]) <= bin_capacity)))
+                            sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k2]]);
+                            new_free_items[0] = p->data;
+                            new_free_items[1] = s->data;
+                            p->data = F[k2];
+                            aux->next = s->next;
+                            free(s);
+                            
+                            if(population[individual][ordered_BinFullness[i]].L.last == s)
+                                population[individual][ordered_BinFullness[i]].L.last = aux;
+                            end
+
+                            population[individual][ordered_BinFullness[i]].L.num-=1;
+                            F[k2] = new_free_items[0];
+                            F[number_free_items + total_free] = new_free_items[1];
+                            total_free+=1;
+                            ban = 1;
+                            break;
+
+                        end
+
+                        if((weight[F[k]] + weight[F[k2]] > weight[p->data] + weight[s->data]) || ((weight[F[k]] + weight[F[k2]] == weight[p->data] + weight[s->data]) && !(weight[F[k]] == weight[p->data] || weight[F[k]] == weight[s->data])))
+                          
+                            if(sum - (weight[p->data] + weight[s->data]) + (weight[F[k]] + weight[F[k2]]) > bin_capacity)
+                                break;
+                            end
+                        
+                            sum = sum - (weight[p->data] + weight[s->data]) + (weight[F[k]] + weight[F[k2]]);
+                            new_free_items[0] = p->data;
+                            new_free_items[1] = s->data;
+                            p->data = F[k];
+                            s->data = F[k2];
+                            F[k] = new_free_items[0];
+                            F[k2] = new_free_items[1];
+                            if(sum == bin_capacity)
+                                ban = 1;
+                                break;
+                            end
+                        end
                     end
+
+                    if(ban)
+                        break;
+                    end
+
                 end
+
                 if(ban)
                     break;
                 end
+
+                aux = s;
+                s = s->next;
+
             end
+            
             if(ban)
                 break;
             end
-            aux = s;
-            s = s->next;
+                p = p->next;
         end
-        
-        if(ban)
-            break;
-        end
-            p = p->next;
-        end
-      
+          
         population[individual][ordered_BinFullness[i]].Bin_Fullness = sum;
       
         if(population[individual][ordered_BinFullness[i]].Bin_Fullness < population[individual][number_items + 4].Bin_Fullness)
@@ -810,7 +816,7 @@ function RP(long int individual, long int &b, long int F[], long int number_free
         end
         
         if(population[individual][ordered_BinFullness[i]].Bin_Fullness == bin_capacity)
-            population[individual][number_items + 3].Bin_Fullness++;
+            population[individual][number_items + 3].Bin_Fullness+=1;
         elseif(population[individual][ordered_BinFullness[i]].Bin_Fullness + weight[ordered_weight[number_items-1]] <= bin_capacity)
             if(ordered_BinFullness[i] < bin_i)
                 bin_i = ordered_BinFullness[i];
@@ -818,7 +824,7 @@ function RP(long int individual, long int &b, long int F[], long int number_free
         end
     end
 
-    for(i = 0; i < bin_i; i++)
+    for(i = 0; i < bin_i; i+=1)
         population[individual][number_items].Bin_Fullness += pow((population[individual][i].Bin_Fullness / bin_capacity), 2);
     end
    
@@ -833,13 +839,13 @@ function RP(long int individual, long int &b, long int F[], long int number_free
     end
 
     if(lighter_weight > bin_capacity - population[individual][number_items + 4].Bin_Fullness)
-        for(i = bin_i; i < b; i++)
+        for(i = bin_i; i < b; i+=1)
             population[individual][number_items].Bin_Fullness += pow((population[individual][i].Bin_Fullness / bin_capacity), 2);
         end
         bin_i = b;
     end
 
-    for(i = 0; i < number_free_items-1; i++)
+    for(i = 0; i < number_free_items-1; i+=1)
         FF(F[i], population[individual], b, bin_i, 0);
     end
     
@@ -866,24 +872,24 @@ function FF(long int item, SOLUTION individual[], long int &total_bins, long int
     if(!is_last && weight[item] > (bin_capacity - (long int)individual[number_items + 4].Bin_Fullness))
         i = total_bins;
     else
-        for(i = beginning; i < total_bins; i++)
+        for(i = beginning; i < total_bins; i+=1)
             if((long int)individual[i].Bin_Fullness + weight[item] <= bin_capacity)
           
                 individual[i].Bin_Fullness += weight[item];
                 individual[i].L.insert(item);
                 if((long int)individual[i].Bin_Fullness == bin_capacity)
-                    individual[number_items + 3].Bin_Fullness++;
+                    individual[number_items + 3].Bin_Fullness+=1;
                 end
 
                 if(is_last)
-                    for(i=i; i < total_bins; i++)
+                    for(i=i; i < total_bins; i+=1)
                         individual[number_items].Bin_Fullness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
                     end
                     return;
                 end
 
                 if((long int)individual[i].Bin_Fullness + weight[ordered_weight[number_items-1]] > bin_capacity && i == bin_i)
-                    bin_i++;
+                    bin_i+=1;
                     individual[number_items].Bin_Fullness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
                 end
                 return;
@@ -904,24 +910,24 @@ function FF(long int item, SOLUTION individual[], long int &total_bins, long int
       individual[number_items].Bin_Fullness += pow((individual[i].Bin_Fullness / bin_capacity), 2);
     end
     
-    total_bins++;
+    total_bins+=1;
 end
 
 
 
 """
 /************************************************************************************************************************
- To calculate the lower bound L2 of Martello and Toth and the ñ large items n_                            *
+ To calculate the lower bound L2 of Martello and Toth and the Ã± large items n_                            *
 ************************************************************************************************************************/
 """
 function LowerBound()
 
-  long int k, m, i, j, aux1, aux2;
-   long double sjx=0, sj2=0, sj3=0;
-   long int jx=0, cj12, jp=0, jpp=0, cj2;
+    long int k, m, i, j, aux1, aux2;
+    long double sjx=0, sj2=0, sj3=0;
+    long int jx=0, cj12, jp=0, jpp=0, cj2;
 
     while(weight[ordered_weight[jx]] > bin_capacity/2 && jx < number_items)
-        jx++;
+        jx+=1;
     end
    
     n_ = jx;
@@ -939,13 +945,13 @@ function LowerBound()
         end
     else
         cj12 = jx;
-        for(i=jx; i < number_items; i++)
+        for(i=jx; i < number_items; i+=1)
             sjx += weight[ordered_weight[i]];
         end
 
         jp = jx;
         
-        for(i = 0; i < jx; i++)
+        for(i = 0; i < jx; i+=1)
             if(weight[ordered_weight[i]] <= bin_capacity - weight[ordered_weight[jx]])
                 jp = i;
                 break;
@@ -953,7 +959,7 @@ function LowerBound()
         end
 
         cj2 = jx - jp;
-        for(i=jp; i <= jx-1; i++)
+        for(i=jp; i <= jx-1; i+=1)
             sj2 += weight[ordered_weight[i]];
         end
 
@@ -963,7 +969,7 @@ function LowerBound()
         weight[number_items]=0;
         
         while(weight[ordered_weight[jpp+1]]==weight[ordered_weight[jpp]])
-            jpp++;
+            jpp+=1;
             sj3 += weight[ordered_weight[jpp]];
         end
  
@@ -981,18 +987,18 @@ function LowerBound()
                 L2 = cj12 + aux1;
             end
 
-            jpp++;
+            jpp+=1;
             if(jpp < number_items)
                 sj3 += weight[ordered_weight[jpp]];
                 
                 while(weight[ordered_weight[jpp+1]] == weight[ordered_weight[jpp]])
-                  jpp++;
+                  jpp+=1;
                   sj3 += weight[ordered_weight[jpp]];
                 end
 
                 while(jp > 0 && weight[ordered_weight[jp-1]] <= bin_capacity - weight[ordered_weight[jpp]])
-                    jp--;
-                    cj2++;
+                    jp-=1;
+                    cj2+=1;
                     sj2 += weight[ordered_weight[jp]];
                 end
             
@@ -1022,20 +1028,19 @@ function Find_Best_Solution()
 
   # long int  i,
   #     best_individual = 0;
-  for(i = 0; i < P_size; i++)
-    if(population[i][number_items].Bin_Fullness > population[best_individual][number_items].Bin_Fullness)
-        best_individual = i;
+    for(i = 0; i < P_size; i+=1)
+        if(population[i][number_items].Bin_Fullness > population[best_individual][number_items].Bin_Fullness)
+            best_individual = i;
+        end
     end
-  end
 
-  if(generation + 1 > 1)
-    if(population[best_individual][number_items].Bin_Fullness > global_best_solution[number_items].Bin_Fullness)
-      Copy_Solution(global_best_solution, population[best_individual], 0);
+    if(generation + 1 > 1)
+        if(population[best_individual][number_items].Bin_Fullness > global_best_solution[number_items].Bin_Fullness)
+            Copy_Solution(global_best_solution, population[best_individual], 0);
+        end
+    else
+        Copy_Solution(global_best_solution, population[best_individual], 0);
     end
-  else
-  
-      Copy_Solution(global_best_solution, population[best_individual], 0);
-  end
 end
 
 
@@ -1055,7 +1060,7 @@ function Sort_Ascending_IndividualsFitness()
 
     while(ban)
         ban = 0;
-        for(i = i2; i < k; i++)
+        for(i = i2; i < k; i+=1)
             if(population[ordered_population[i]][number_items].Bin_Fullness > population[ordered_population[i+1]][number_items].Bin_Fullness)
                 aux = ordered_population[i];
                 ordered_population[i] = ordered_population[i+1];
@@ -1065,12 +1070,12 @@ function Sort_Ascending_IndividualsFitness()
                 aux = ordered_population[i+1];
                 ordered_population[i+1] = ordered_population[i2];
                 ordered_population[i2] = aux;
-                i2++;
+                i2+=1;
             end
         end
-        k--;
+        k-=1;
     end
-   repeated_fitness = i2;
+    repeated_fitness = i2;
 end
 
 
@@ -1092,7 +1097,7 @@ function Sort_Ascending_BinFullness(long int ordered_BinFullness[], long int ind
     k = population[individual][number_items + 1].Bin_Fullness - 1;
     while(ban)
         ban = 0;
-        for(m = 0; m < k; m++)
+        for(m = 0; m < k; m+=1)
             if(population[individual][ordered_BinFullness[m]].Bin_Fullness > population[individual][ordered_BinFullness[m+1]].Bin_Fullness)
                 temporary_variable = ordered_BinFullness[m];
                 ordered_BinFullness[m] = ordered_BinFullness[m + 1];
@@ -1100,7 +1105,7 @@ function Sort_Ascending_BinFullness(long int ordered_BinFullness[], long int ind
                 ban = 1;
             end
         end
-        k--;
+        k-=1;
     end
 end
 
@@ -1124,7 +1129,7 @@ function Sort_Descending_BinFullness(long int ordered_BinFullness[], long int in
     k = population[individual][number_items + 1].Bin_Fullness - 1;
     while(ban)      
         ban = 0;
-        for(m = 0; m < k; m++)
+        for(m = 0; m < k; m+=1)
             if(population[individual][ordered_BinFullness[m]].Bin_Fullness < population[individual][ordered_BinFullness[m+1]].Bin_Fullness)          
                 temporary_variable = ordered_BinFullness[m];
                 ordered_BinFullness[m] = ordered_BinFullness[m + 1];
@@ -1132,7 +1137,7 @@ function Sort_Descending_BinFullness(long int ordered_BinFullness[], long int in
                 ban = 1;
             end
         end
-        k--;
+        k-=1;
     end
 end
 
@@ -1153,7 +1158,7 @@ function Sort_Random(long int random_array[], long int k, int n)
    #      aux,
    #      random_number;
 
-    for(i = n - 1; i >= k; i--)
+    for(i = n - 1; i >= k; i-=1)
         random_number = k + get_rand(&seed_permutation,n-k) - 1;
         aux = random_array[random_number];
         random_array[random_number] = random_array[i];
@@ -1187,7 +1192,7 @@ function Sort_Descending_Weights(long int ordered_weight[], long int n)
     k = n - 1;
     while(ban)
         ban = 0;
-        for(m = 0; m < k; m++)
+        for(m = 0; m < k; m+=1)
             if(weight[ordered_weight[m]] < weight[ordered_weight[m+1]])
                 temporary_variable = ordered_weight[m];
                 ordered_weight[m] = ordered_weight[m + 1];
@@ -1195,7 +1200,7 @@ function Sort_Descending_Weights(long int ordered_weight[], long int n)
                 ban = 1;
             end
         end
-        k--;
+        k-=1;
     end
 end
 
@@ -1214,7 +1219,7 @@ function Copy_Solution(SOLUTION solution[], SOLUTION solution2[], int delete_sol
  
   # long int  j;
 
-   for(j = 0; j < solution2[number_items + 1].Bin_Fullness; j++)
+   for(j = 0; j < solution2[number_items + 1].Bin_Fullness; j+=1)
    
         solution[j].Bin_Fullness = solution2[j].Bin_Fullness;
         solution[j].L.clone_linked_list(solution2[j].L);
@@ -1227,7 +1232,7 @@ function Copy_Solution(SOLUTION solution[], SOLUTION solution2[], int delete_sol
     
     while(j < solution[number_items + 1].Bin_Fullness)
         solution[j].Bin_Fullness = 0;
-        solution[j++].L.free_linked_list();
+        solution[j+=1].L.free_linked_list();
     end
 
     solution[number_items].Bin_Fullness = solution2[number_items].Bin_Fullness;
@@ -1258,8 +1263,8 @@ function Clean_population()
   # long int  i,
   #     j;
 
-    for(i = 0; i < P_size; i++)
-        for(j = 0; j < number_items + 5; j++)    
+    for(i = 0; i < P_size; i+=1)
+        for(j = 0; j < number_items + 5; j+=1)    
             population[i][j].L.free_linked_list();
             population[i][j].Bin_Fullness = 0;
             children[i][j].L.free_linked_list();
@@ -1293,17 +1298,17 @@ function Used_Items(long int individual, long int bin, long int items[])
         item = p->data;
         p = p->next;
         if(items [item] != 1)
-            items_auxiliary[counter++] = item;
+            items_auxiliary[counter+=1] = item;
             items[item] = 1;
         else   
-            for(i = 0; i < counter ; i++)
+            for(i = 0; i < counter ; i+=1)
                 items[items_auxiliary[i]] = 0;
             end
             return 0;
         end
     end
     
-    return (1);
+    return 1;
 end
 
 
@@ -1321,15 +1326,15 @@ function Adjust_Solution(long int individual)
   #     j = 0,
   #        k;
     while(population[individual][i].Bin_Fullness > 0)
-        i++;
+        i+=1;
     end
     
-    for(j = i, k = i; j < number_items; j++, k++)
+    for(j = i, k = i; j < number_items; j+=1, k+=1)
         
         if(j < population[individual][number_items + 1].Bin_Fullness) 
             
             while(population[individual][k].Bin_Fullness == 0)
-                k++;
+                k+=1;
             end
             
             population[individual][j].L.first = NULL;
@@ -1344,331 +1349,3 @@ function Adjust_Solution(long int individual)
         end
     end
 end
-
-
-
-"""
-/************************************************************************************************************************
- To read the data defining a BPP instance                                                     *
-************************************************************************************************************************/
-"""
-function LoadData()
-{
-    char  string[300];
-  long  k;
-   long int ban = 0;
-   long double bin_capacity1;
-   long double total_accumulated_aux = 0;
-
-    FILE  *data_file;
-
-   string[0] = '\0';
-    strcpy(string, file);
-  if((data_file = fopen(string, "rt")) == NULL)
-    {
-      printf("\nThere is no data file ==> [%s]%c", string, 7);
-      return 0;
-    }
-   printf("\nThe file is %s", string);
-    fgets(string, 300, data_file);
-    fscanf(data_file, "%ld\n", &number_items);
-    bin_capacity = 0;
-    fgets(string, 300, data_file);
-    fscanf(data_file, "%Lf\n", &bin_capacity1);
-    best_solution = 0;
-    fgets(string, 300, data_file);
-    fscanf(data_file, "%ld\n", &best_solution);
-    fgets(string, 300, data_file);
-    total_accumulated_weight = 0;
-    for(k = 0; k < number_items; k++)
-    {   fscanf(data_file, "%Lf", &weight1[k]);
-      weight[k] = (long int)weight1[k];
-      total_accumulated_weight = (total_accumulated_weight + weight[k]);
-      total_accumulated_aux += weight1[k];
-      if(ban == 0)
-    {
-        if(weight1[k] / weight[k] > 1)
-          ban = 1;
-      }
-    }
-   if(ban)
-   {  total_accumulated_weight = 0;
-    for(k = 0; k < number_items; k++)
-    { weight[k] = (long int)(ceil(weight1[k]*bin_capacity1 - .5) );
-         total_accumulated_weight = (total_accumulated_weight + weight[k]);
-      }
-      bin_capacity1 *= bin_capacity1;
-   }
-   bin_capacity = (long int)bin_capacity1;
-   fclose(data_file);
-   if(ban)
-   {  if((long int)total_accumulated_weight != (long int)(ceil(total_accumulated_aux*sqrt(bin_capacity) - .5) ))
-    { printf("\t Error loading weights");
-      # getch();
-        exit(1);
-    }
-   }
-   return 1;
-}
-
-
-
-"""
-/************************************************************************************************************************
- To print the performance of the procedure on a BPP instance in a data file                             *
-************************************************************************************************************************/
-"""
-function WriteOutput()
-{
-   output = fopen(nameC, "a");
-   fprintf(output, "\n%s \t %d \t %d \t %d \t %f", file, (int)L2, (int)global_best_solution[number_items + 1].Bin_Fullness, generation, TotalTime);
-  if(save_bestSolution == 1)
-    sendtofile(global_best_solution);
-   fclose(output);
-}
-
-
-
-"""
-/************************************************************************************************************************
- To print the global best solution in a data file                                               *
-************************************************************************************************************************/
-"""
-function sendtofile(SOLUTION best[])
-{
-  char  string1[300],
-      fil[300],
-         aux[300];
-
-  long double accumulated = 0;
-  long int   bin,
-    ban = 1,
-    item = 0,
-    position = 0,
-      bins[ATTRIBUTES] = {0},
-    n_bins = best[number_items + 1].Bin_Fullness;
-
-   int  binError = -1,
-         banError = 0;
-   long int j;
-
-
-
-    FILE *output;
-   node *p;
-    strcpy(fil, "Details_GGA-CGT/GGA-CGT_S_(");
-    strcpy(string1, file);
-   # itoa(conf, aux, 10);
-   sprintf(aux,"%ld", conf);
-   strcat(fil,aux);
-   strcat(fil,")_");
-  strcat(fil,string1);
-  if((output = fopen(fil, "w+")) == NULL)
-    {
-      # printf("\nThere is no data file ==> [%s]%c", file, 7);
-    getchar();
-    exit(1);
-    }
-  fprintf(output,"Instance:\t%s\n", file);
-  fprintf(output,"Number of items:\t%ld\n", number_items);
-  fprintf(output,"Bin capacity:\t%ld\n", bin_capacity);
-  fprintf(output,"L2:\t%ld\n", L2);
-   fprintf(output,"\n****************************GGA-CGT global best solution******************************\n");
-  fprintf(output,"Number of bins:\n%ld\n", n_bins);
-    fprintf(output,"Fitness:\n%f\n", best[number_items].Bin_Fullness);
-  fprintf(output,"Optimal order of the weights:\n");
-
-  for (bin = 0; bin < n_bins; bin++)
-  {  bins[bin] = 0;
-    p = best[bin].L.first;
-    while(true)
-    {  if(p == NULL)
-          break;
-         item = p->data;
-         p = p->next;
-      bins[bin] += weight[item];
-         accumulated += weight[item];
-         fprintf(output, "%ld\n",weight[item]);
-      if(bins[bin] > bin_capacity)
-      {
-        printf("ERROR the capacity of bin %ld was exceeded", bin);
-            binError = bin;
-        getchar();
-            banError = 1;
-      }
-
-    }
-  }
-
-   if(accumulated != total_accumulated_weight)
-   {   printf("ERROR inconsistent sum of weights");
-       getchar();
-
-   }
-
-  fprintf(output,"\nDetailed solution:");
-  for (j=0; j < n_bins; j++)
-  {
-    if((long int)bins[j] > (long int)bin_capacity)
-        fprintf(output, " \n ********************ERROR the capacity of the bin was exceeded******************");
-    fprintf(output, "\n\nBIN %ld\nFullness: %ld Gap: %ld\nStored items:\t ",j + 1, bins[j], bin_capacity-bins[j]);
-      p = best[j].L.first;
-    for (position=0; ; position++)
-    {  if(p == NULL)
-          break;
-      item = p->data;
-      p = p->next;
-      fprintf(output, "[Item: %ld, Weight: %ld]\t", item + 1,weight[item]);
-    }
-
-  }
-
-  fclose(output);
-
-   if(banError)
-    exit(1);
-}
-
-
-
-"""
-/******************************************************
- Author: Adriana Cesario de Faria Alvim               *
-         (alvim@inf.puc-rio.br, adriana@pep.ufrj.br ) *
-*******************************************************/
-/***************************************************************************
- Portable pseudo-random number generator                                   *
- Machine independent as long as the machine can represent all the integers *
-         in the interval [- 2**31 + 1, 2**31 - 1].                         *
-                                                                           *
- Reference: L. Schrage, "A more Portable Fortran Random Number Generator", *
-            ACM Transactions on Mathematical Software, Vol. 2, No. 2,      *
-            (June, 1979).                                                  *
-                                                                           *
- The generator produces a sequence of positive integers, "ix",             *
-      by the recursion: ix(i+1) = A * ix(i) mod P, where "P" is Mersenne   *
-      prime number (2**31)-1 = 2147483647 and "A" = 7**5 = 16807. Thus all *
-      integers "ix" produced will satisfy ( 0 < ix < 2147483647 ).         *
-                                                                           *
- The generator is full cycle, every integer from 1 to (2**31)-2 =          *
-      2147483646 is generated exactly once in the cycle.                   *
-                                                                           *
- Input: integer "ix", ( 0 < ix < 2147483647 )                              *
- Ouput: real "xrand", ( 0 < xrand < 1 )                                    *
-***************************************************************************/
-"""
-function randp(int *ix)
-{
-  int xhi, xalo, leftlo, fhi, k;
-
-  const int A   = 16807;  """
-  /* = 7**5          */
-  """
-  const int P   = 2147483647; """
-  /* = Mersenne prime (2**31)-1  */
-  """
-  const int b15   = 32768;  """
-  /* = 2**15                 */
-  """
-  const int b16 = 65536;  """
-  /* = 2**16                 */
-  """
-
-  """
-  /* get 15 hi order bits of ix */
-  """
-  xhi = *ix/b16;
-
-  """
-  /* get 16 lo bits of ix and form lo product */
-  """
-  xalo  = (*ix-xhi*b16)*A;
-
-  """
-  /* get 15 hi order bits of lo product */
-  """
-  leftlo  = xalo/b16;
-
-  """
-  /* from the 31 highest bits of full product */
-  """
-  fhi = xhi*A+leftlo;
-
-  """
-  /* get overflo past 31st bit of full product */
-  """
-  k = fhi/b15;
-
-  """
-  /* assemble all the parts and presubtract P */
-  """
-        """
-        /* the parentheses are essential            */
-        """
-  *ix = (((xalo-leftlo*b16)-P)+(fhi-k*b15)*b16)+k;
-
-  """
-  /* add P back in if necessary  */
-  """
-  if (*ix < 0) *ix = *ix + P;
-
-  """
-  /* multiply by 1/(2**31-1) */
-  """
-  return (float)(*ix*4.656612875e-10);
-}
-
-"""
-/***********************************************************
- To generate a random integer "k" in [i,j].                *
- Input: integers "seed", "i" and "j" in [1,2147483646]     *
- Ouput: integer in [i,j]                                   *
-************************************************************/
-"""
-function get_rand_ij(int *seed, int i, int j )
-{
-
-   randp(seed);
-
-   return ((double)*seed/((double)2147483647/((double)(j-i+1))))+i;
-
-}
-
-"""
-/**************************************************************
- To generate a random integer "k" in [1,size].                *
- Input: integers "seed" and "size" in [1,2147483646]          *
- Ouput: integer in [1,size]
-                                   *
-**************************************************************/
-"""
-function get_rand(int *seed, int size )
-{
-   randp(seed);
-
-   return ((double)*seed/((double)2147483647/((double)size)))+1;
-
-}
-
-
-"""
-/*************************************************
- To check the correctness of the implementation. *
- Output: correct (1) or wrong (0)                 *
-**************************************************/
-"""
-function trand()
-{
-  int i, seed;
-
-  seed = 1;
-
-  for (i=0;i<1000;i++)
-    randp(&seed);
-
-  if ( seed == 522329230 )
-      return 1;
-  else
-      return 0;
-
-}
