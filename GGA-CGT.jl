@@ -237,37 +237,33 @@ end
    (0) otherwise                                                                      *
 ************************************************************************************************************************/
 """
-function Generation()
+function Generation(status)
+    """
+    /*****************************************************************************************************-
+    ********************************-Controlled selection for crossover************************************
+    ****************************************************************************************************-*/
+    """
 
-   # 
-   #    f1,
-   #    f2,
-   #       h,
-    #   k;
+    # Sort_Ascending_IndividualsFitness();
+    sort!(population, lt = (a, b) -> a.fitness < b.fitness)
 
-   """
-   /*****************************************************************************************************-
-   ********************************-Controlled selection for crossover************************************
-   ****************************************************************************************************-*/
-   """
-    Sort_Ascending_IndividualsFitness();
-    # if(generation > 1 && repeated_fitness > 0.1*P_size)
-    #   return(2);
-    Sort_Random(random_individuals,0,(int)(P_size-(int)(P_size*B_size)));
-    Sort_Random(best_individuals,(1-p_c)*P_size,P_size);
-    k = 0;
-    h = P_size - 1;
-    i = P_size - 1; j = 0
+    random_individuals = Sort_Random(random_individuals, 1, P_size - (P_size*B_size) );
+    best_individuals   = Sort_Random(best_individuals, floor(Int, (1-p_c)*P_size), P_size);
+
+    k = 0
+    h = P_size - 1
+    i = P_size - 1
+    j = 0
    
     while (i > P_size - (p_c/2*P_size))
-        f1 = best_individuals[h-=1];
-        f2 = random_individuals[k+=1];
+        f1 = best_individuals[h];   h-=1
+        f2 = random_individuals[k]; k+=1
       
         if f2 == f1
-            f1 = best_individuals[h-=1];
+            f1 = best_individuals[h]; h-=1
         end
       
-        Gene_Level_Crossover_FFD(ordered_population[f1], ordered_population[f2], j);
+        Gene_Level_Crossover_FFD(ordered_population[f1], ordered_population[f2], j, status);
         children[j].generation = generation + 1;
         children[j].fitness /= children[j][number_items+1].Bin_Fullness;
       
@@ -393,7 +389,7 @@ end
   The position in the set of children of the child solution: child                                    *
 ************************************************************************************************************************/
 """
-function Gene_Level_Crossover_FFD( father_1,  father_2,  child)
+function Gene_Level_Crossover_FFD( father_1,  father_2,  child, status)
 
   #   k,
  #      counter,

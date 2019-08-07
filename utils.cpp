@@ -33,51 +33,40 @@ void LoadData()
     fgets(string, 300, data_file);
     total_accumulated_weight = 0;
     for(k = 0; k < number_items; k++)
-    {   fscanf(data_file, "%Lf", &weight1[k]);
-      weight[k] = (long int)weight1[k];
-      total_accumulated_weight = (total_accumulated_weight + weight[k]);
-      total_accumulated_aux += weight1[k];
-      if(ban == 0)
-    {
-        if(weight1[k] / weight[k] > 1)
-          ban = 1;
-      }
+    {     fscanf(data_file, "%Lf", &weight1[k]);
+          weight[k] = (long int)weight1[k];
+          total_accumulated_weight = (total_accumulated_weight + weight[k]);
+          total_accumulated_aux += weight1[k];
+          if(ban == 0) {
+            if(weight1[k] / weight[k] > 1)
+              ban = 1;
+          }
     }
-   if(ban)
-   {  total_accumulated_weight = 0;
-    for(k = 0; k < number_items; k++)
-    { weight[k] = (long int)(ceil(weight1[k]*bin_capacity1 - .5) );
-         total_accumulated_weight = (total_accumulated_weight + weight[k]);
+
+   if(ban) {  
+      total_accumulated_weight = 0;
+      for(k = 0; k < number_items; k++) {     
+            weight[k] = (long int)(ceil(weight1[k]*bin_capacity1 - .5) );
+            total_accumulated_weight = (total_accumulated_weight + weight[k]);
       }
       bin_capacity1 *= bin_capacity1;
    }
    bin_capacity = (long int)bin_capacity1;
    fclose(data_file);
    if(ban)
-   {  if((long int)total_accumulated_weight != (long int)(ceil(total_accumulated_aux*sqrt(bin_capacity) - .5) ))
-    { printf("\t Error loading weights");
-      # getch();
-        exit(1);
-    }
+   {  
+      if((long int)total_accumulated_weight != (long int)(ceil(total_accumulated_aux*sqrt(bin_capacity) - .5) )) {
+          printf("\t Error loading weights");
+          // # getch();
+          exit(1);
+      }
    }
    return 1;
 }
 
 
 
-"""
-/************************************************************************************************************************
- To print the performance of the procedure on a BPP instance in a data file                             *
-************************************************************************************************************************/
-"""
-function WriteOutput()
-{
-   output = fopen(nameC, "a");
-   fprintf(output, "\n%s \t %d \t %d \t %d \t %f", file, (int)L2, (int)global_best_solution[number_items + 1].Bin_Fullness, generation, TotalTime);
-  if(save_bestSolution == 1)
-    sendtofile(global_best_solution);
-   fclose(output);
-}
+
 
 
 
