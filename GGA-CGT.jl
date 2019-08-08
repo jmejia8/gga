@@ -1,7 +1,5 @@
 # GGA-CGT
 # GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING PROBLEM
-
-import CSV
 import DelimitedFiles.readdlm
 import Random: shuffle, shuffle!
 
@@ -131,7 +129,7 @@ function Status(;
     end_time=0,
 
 
-    status.global_best_solution=Solution(),
+    global_best_solution=Solution(),
     population=Solution[],
     children=Solution[],
 
@@ -531,13 +529,13 @@ function Generation(status)
             f1 = best_individuals[h]; h-=1
         end
       
-        Gene_Level_Crossover_FFD(f1, f2, j, status);
-        children[j].generation = generation + 1;
-        children[j].fitness /= children[j].number_of_bins;
+        child1 = Gene_Level_Crossover_FFD(status.population[f1], status.population[f2], status)
+        child1.generation = generation + 1
+        child1.fitness /= child1.number_of_bins
       
-        if(children[j].number_of_bins == L2)  
+        if(child1.number_of_bins == L2)  
             end_time = clock();
-            status.global_best_solution = Copy_Solution( children[j], status, 0);
+            status.global_best_solution = Copy_Solution( child1, status, 0);
             status.global_best_solution.generation = generation+1;
             status.TotalTime = (end_time - start)
             WriteOutput(status);
@@ -545,13 +543,13 @@ function Generation(status)
             return 1
         end
       
-        Gene_Level_Crossover_FFD(f2, f1, j+1);
-        children[j+1].generation = generation + 1;
-        children[j+1].fitness /= children[j+1].number_of_bins;
+        Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
+        child2.generation = generation + 1
+        child2.fitness /= child2.number_of_bins
       
-        if(children[j+1].number_of_bins == L2)   
+        if(child2.number_of_bins == L2)   
             end_time = clock();
-            status.global_best_solution = Copy_Solution( children[j+1], status, 0);
+            status.global_best_solution = Copy_Solution( child2, status, 0);
             status.global_best_solution.generation = generation+1;
             status.TotalTime = (end_time - start);
             WriteOutput(status);
@@ -567,7 +565,7 @@ function Generation(status)
     # ==========================================================================
     k = 0;
     for j = 1:p_c/2*P_size - 1
-        Copy_Solution(children[j], status, 1);
+        Copy_Solution(child1, status, 1);
         k+=1
     end
 
@@ -577,7 +575,7 @@ function Generation(status)
         while population[k].generation == generation + 1
             k+=1;
         end
-        Copy_Solution(children[j], status, 1);
+        Copy_Solution(child1, status, 1);
    end
     
     """
@@ -646,55 +644,43 @@ end
 #   The positions in the population of the two parent solutions: father_1 and father_2
 #   The position in the set of children of the child solution: child
 # ==============================================================================
-function Gene_Level_Crossover_FFD( father_1,  father_2,  child, status)
+function Gene_Level_Crossover_FFD( father_1,  father_2, status)
 
-  #   k,
- #      counter,
- #      k2 = 0,
- #      ban = 1,
- #         items[ATTRIBUTES] = {0},
- #         free_items[ATTRIBUTES] = {0};
- #   children[child].highest_avaliable = bin_capacity;
+#   k,
+#      counter,
+#      k2 = 0,
+#      ban = 1,
+#         items[ATTRIBUTES] = {0},
+#         free_items[ATTRIBUTES] = {0};
+#   children[child].highest_avaliable = bin_capacity;
 
-    if(population[father_1].number_of_bins > population[father_2].number_of_bins)
-        counter = population[father_1].number_of_bins;
-    else
-        counter = population[father_2].number_of_bins;
-    end
+    counter = max(father_1.number_of_bins, father_2.number_of_bins)
 
-     *random_order1 = new  [counter];
-     *random_order2 = new  [counter];
+    
+    sort!(father_1.bins; lt = (a, b) -> b.Bin_Fullness < a.Bin_Fullness)
+    sort!(father_2.bins; lt = (a, b) -> b.Bin_Fullness < a.Bin_Fullness)
 
 
-    for(k = 1:counter)
-        random_order1[k] = k;
-        random_order2[k] = k;
-    end
-
-    Sort_Random(random_order1,0, population[father_1].number_of_bins);
-    Sort_Random(random_order2,0, population[father_2].number_of_bins);
-    Sort_Descending_BinFullness(random_order1, father_1);
-    Sort_Descending_BinFullness(random_order2, father_2);
-
-    for(k = 1:population[father_1].number_of_bins)
+    for k = 1:father_1.number_of_bins
    
-        if(population[father_1][random_order1[k]].Bin_Fullness >= population[father_2][random_order2[k]].Bin_Fullness)
+        if father_1.bins[k].Bin_Fullness >= father_2.bins[k].Bin_Fullness
             
+            # solo copia el bin si no estan repetidos los items
             ban = Used_Items(father_1, random_order1[k], items);
             if (ban == 1)
-                children[child][k2].w.clone_linked_list(population[father_1][random_order1[k]].w);
-                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+                children[child][k2].w.clone_linked_list(father_1.bins[k].w);
+                children[child][k2+=1].Bin_Fullness = father_1.bins[k].Bin_Fullness;
             
                 if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
                     children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
                 end
             end
             
-            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+            if(father_2.bins[k].Bin_Fullness > 0)
                 ban = Used_Items(father_2, random_order2[k], items);
                 if (ban == 1)
-                    children[child][k2].w.clone_linked_list(population[father_2][random_order2[k]].w);
-                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
+                    children[child][k2].w.clone_linked_list(father_2.bins[k].w);
+                    children[child][k2+=1].Bin_Fullness = father_2.bins[k].Bin_Fullness;
 
                     if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
                         children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
@@ -702,11 +688,11 @@ function Gene_Level_Crossover_FFD( father_1,  father_2,  child, status)
                 end
             end
         else
-            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+            if(father_2.bins[k].Bin_Fullness > 0)
                 ban = Used_Items(father_2, random_order2[k], items);
                 if (ban == 1)
-                    children[child][k2].w.clone_linked_list(population[father_2][random_order2[k]].w);
-                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
+                    children[child][k2].w.clone_linked_list(father_2.bins[k].w);
+                    children[child][k2+=1].Bin_Fullness = father_2.bins[k].Bin_Fullness;
                     
                     if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
                         children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
@@ -716,8 +702,8 @@ function Gene_Level_Crossover_FFD( father_1,  father_2,  child, status)
 
             ban = Used_Items(father_1, random_order1[k], items);
             if (ban == 1)
-                children[child][k2].w.clone_linked_list(population[father_1][random_order1[k]].w);
-                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+                children[child][k2].w.clone_linked_list(father_1.bins[k].w);
+                children[child][k2+=1].Bin_Fullness = father_1.bins[k].Bin_Fullness;
                 if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
                     children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
                 end
