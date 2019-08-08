@@ -131,7 +131,7 @@ function Status(;
     end_time=0,
 
 
-    global_best_solution=Solution(),
+    status.global_best_solution=Solution(),
     population=Solution[],
     children=Solution[],
 
@@ -174,7 +174,7 @@ function Status(;
         _p_,
         start,
         end_time,
-        global_best_solution,
+        status.global_best_solution,
         population,
         children,
         seed_emptybin,
@@ -495,6 +495,258 @@ function FF(item,  individual, status)
     end
 
 
+end
+
+
+# To apply the reproduction technique: Controlled selection and Controlled replacement.
+# Output:
+#   (1) when it finds a solution for which the size matches the L2 lower bound
+#   (2) if more than 0.1*P_size individuals (solutions) have duplicated-fitness
+#   (0) otherwise
+
+function Generation(status)
+    # ==========================================================================
+    #                 Controlled selection for crossover
+    # ==========================================================================
+
+    # Sort_Ascending_IndividualsFitness();
+    sort!(population, lt = (a, b) -> a.fitness < b.fitness)
+
+    m = P_size - floor(Int, P_size*B_size)
+    random_individuals = shuffle(1:m)
+    
+    m = floor(Int, (1-p_c)*P_size)
+    best_individuals = shuffle(m:P_size);
+
+    k = 1
+    h = P_size
+    i = P_size
+    j = 1
+   
+    while (i >= P_size - (p_c/2*P_size))
+        f1 = best_individuals[h];   h-=1
+        f2 = random_individuals[k]; k+=1
+      
+        if f2 == f1
+            f1 = best_individuals[h]; h-=1
+        end
+      
+        Gene_Level_Crossover_FFD(f1, f2, j, status);
+        children[j].generation = generation + 1;
+        children[j].fitness /= children[j].number_of_bins;
+      
+        if(children[j].number_of_bins == L2)  
+            end_time = clock();
+            status.global_best_solution = Copy_Solution( children[j], status, 0);
+            status.global_best_solution.generation = generation+1;
+            status.TotalTime = (end_time - start)
+            WriteOutput(status);
+            status.is_optimal_solution = true;
+            return 1
+        end
+      
+        Gene_Level_Crossover_FFD(f2, f1, j+1);
+        children[j+1].generation = generation + 1;
+        children[j+1].fitness /= children[j+1].number_of_bins;
+      
+        if(children[j+1].number_of_bins == L2)   
+            end_time = clock();
+            status.global_best_solution = Copy_Solution( children[j+1], status, 0);
+            status.global_best_solution.generation = generation+1;
+            status.TotalTime = (end_time - start);
+            WriteOutput(status);
+            status.is_optimal_solution = true;
+            return 1
+        end
+        
+        i-=1; j+=2
+    end
+
+    # ==========================================================================
+    #               Controlled replacement for crossover
+    # ==========================================================================
+    k = 0;
+    for j = 1:p_c/2*P_size - 1
+        Copy_Solution(children[j], status, 1);
+        k+=1
+    end
+
+    k = 0;
+
+   for(i = P_size - 1; i > P_size - (p_c/2*P_size); i-=1, j+=1)
+        while population[k].generation == generation + 1
+            k+=1;
+        end
+        Copy_Solution(children[j], status, 1);
+   end
+    
+    """
+    /*****************************************************************************************************-
+    ********************************Controlled selection for mutation**************************************
+    ****************************************************************************************************-*/
+    """
+    Sort_Ascending_IndividualsFitness();
+    # if(generation > 1 && repeated_fitness > 0.1*P_size)
+    #   return (2);
+    j = 0;
+    for i = reverse(1:(P_size - (p_m*P_size)))
+  
+        if(j < P_size*B_size && generation+ 1 - population[i].generation < life_span)
+      
+            """
+            /*****************************************************************************************************-
+            **********************************Controlled replacement for mutation**********************************
+            ****************************************************************************************************-*/
+            """
+            Copy_Solution(population[i], status, 0);
+            Adaptive_Mutation_RP(j, k_cs, 1);
+            population[j].generation = generation + 1;
+            population[j].fitness /= population[j].number_of_bins;
+          
+            if(population[j].number_of_bins == L2)
+                end_time = clock();
+                status.global_best_solution = Copy_Solution( population[j], status, 0);
+                status.global_best_solution.fitness = population[j].fitness;;
+                status.global_best_solution.generation = generation+1;
+                status.global_best_solution.number_of_bins = population[j].number_of_bins;
+                status.global_best_solution.fully_bins = population[j].fully_bins;
+                status.TotalTime = (end_time - start);
+                WriteOutput(status);
+                status.is_optimal_solution = true;
+                return 1
+            end
+          
+            j+=1;
+        else
+            Adaptive_Mutation_RP(i, k_ncs, 0);
+            population[i].generation = generation + 1;
+            population[i].fitness /= population[i].number_of_bins;
+            if population[i].number_of_bins == L2
+                end_time = clock();
+                status.global_best_solution = Copy_Solution( population[i], status, 0);
+                status.global_best_solution.fitness = population[i].fitness;;
+                status.global_best_solution.generation = generation+1;
+                status.global_best_solution.number_of_bins = population[i].number_of_bins;
+                status.global_best_solution.fully_bins = population[i].fully_bins;
+                status.TotalTime = (end_time - start);
+                WriteOutput(status);
+                status.is_optimal_solution = true;
+                return 1
+            end
+        end
+    end
+    
+    return 0;
+end
+
+
+# ==============================================================================
+# To recombine two parent solutions producing a child solution.
+# Input:
+#   The positions in the population of the two parent solutions: father_1 and father_2
+#   The position in the set of children of the child solution: child
+# ==============================================================================
+function Gene_Level_Crossover_FFD( father_1,  father_2,  child, status)
+
+  #   k,
+ #      counter,
+ #      k2 = 0,
+ #      ban = 1,
+ #         items[ATTRIBUTES] = {0},
+ #         free_items[ATTRIBUTES] = {0};
+ #   children[child].highest_avaliable = bin_capacity;
+
+    if(population[father_1].number_of_bins > population[father_2].number_of_bins)
+        counter = population[father_1].number_of_bins;
+    else
+        counter = population[father_2].number_of_bins;
+    end
+
+     *random_order1 = new  [counter];
+     *random_order2 = new  [counter];
+
+
+    for(k = 1:counter)
+        random_order1[k] = k;
+        random_order2[k] = k;
+    end
+
+    Sort_Random(random_order1,0, population[father_1].number_of_bins);
+    Sort_Random(random_order2,0, population[father_2].number_of_bins);
+    Sort_Descending_BinFullness(random_order1, father_1);
+    Sort_Descending_BinFullness(random_order2, father_2);
+
+    for(k = 1:population[father_1].number_of_bins)
+   
+        if(population[father_1][random_order1[k]].Bin_Fullness >= population[father_2][random_order2[k]].Bin_Fullness)
+            
+            ban = Used_Items(father_1, random_order1[k], items);
+            if (ban == 1)
+                children[child][k2].w.clone_linked_list(population[father_1][random_order1[k]].w);
+                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+            
+                if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
+                    children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
+                end
+            end
+            
+            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+                ban = Used_Items(father_2, random_order2[k], items);
+                if (ban == 1)
+                    children[child][k2].w.clone_linked_list(population[father_2][random_order2[k]].w);
+                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
+
+                    if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
+                        children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
+                    end
+                end
+            end
+        else
+            if(population[father_2][random_order2[k]].Bin_Fullness > 0)
+                ban = Used_Items(father_2, random_order2[k], items);
+                if (ban == 1)
+                    children[child][k2].w.clone_linked_list(population[father_2][random_order2[k]].w);
+                    children[child][k2+=1].Bin_Fullness = population[father_2][random_order2[k]].Bin_Fullness;
+                    
+                    if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
+                        children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
+                    end
+                end
+            end
+
+            ban = Used_Items(father_1, random_order1[k], items);
+            if (ban == 1)
+                children[child][k2].w.clone_linked_list(population[father_1][random_order1[k]].w);
+                children[child][k2+=1].Bin_Fullness = population[father_1][random_order1[k]].Bin_Fullness;
+                if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
+                    children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
+                end
+            end
+        end
+    end
+
+
+    k = 0;
+    for(counter = 0; counter < number_items; counter+=1)
+        if(items[ordered_weight[counter]] == 0)
+            free_items [k+=1] = ordered_weight[counter];
+        end
+    end
+   
+    if(k > 0)
+        bin_i = 0;
+        for(counter = 1:k-1)
+            FF(free_items[counter], children[child], k2, bin_i,0);
+            FF(free_items[counter], children[child], k2, bin_i,1);
+        end
+    else
+        for(k = 0; k < k2; k+=1)
+            children[child].fitness += pow((children[child][k].Bin_Fullness / bin_capacity), 2);
+        end
+    end
+    children[child][number_items+1].Bin_Fullness = k2;
+    free(random_order1);
+    free(random_order2);
 end
 
 
