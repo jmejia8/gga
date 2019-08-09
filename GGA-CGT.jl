@@ -31,6 +31,17 @@ function Solution(;bins=Bins[],
     Solution(bins,fitness,number_of_bins,generation,fully_bins,highest_avaliable)
 end
 
+function Solution(Bins::Bins, status)
+    s = sum( b -> sum(view(status.weight, b.w))^2, bins)
+    fitness = s / (status.bin_capacity*number_of_bins)^2
+    number_of_bins = length(Bins)
+    generation = status.generation
+    fully_bins = sum( b ->  b.Bin_Fullness == status.bin_capacity, bins )
+    highest_avaliable = minimum([ b.Bin_Fullness for b in bins ])
+
+    Solution(bins,fitness,number_of_bins,generation,fully_bins,highest_avaliable)
+end
+
 mutable struct Status
     is_optimal_solution::Bool
     save_bestSolution::Bool
@@ -481,17 +492,18 @@ end
 #   The first bin that could have sufficient available capacity to store the item: beginning
 #   A value that indicates if it is the last item to be stored into the individual: is_last
 
-function FF(item,  individual, status)
+FF(item,  individual::Solution, status) = FF(item,  individual.bins, status)
+
+function FF(item,  bins::Bins, status)
     w = status.weight[item]
-    i = findfirst( bin-> bin.Bin_Fullness + w <= status.bin_capacity, individual.bins)
+    i = findfirst( bin-> bin.Bin_Fullness + w <= status.bin_capacity, bins)
 
     if i == nothing
-        push!(individual.bins, Bin([item], w))
+        push!(bins, Bin([item], w))
     else
-        push!(individual.bins[i].w, item)
-        individual.bins[i].Bin_Fullness += w
+        push!(bins[i].w, item)
+        bins[i].Bin_Fullness += w
     end
-
 
 end
 
@@ -530,35 +542,25 @@ function Generation(status)
         end
       
         child1 = Gene_Level_Crossover_FFD(status.population[f1], status.population[f2], status)
-        child1.generation = generation + 1
-        child1.fitness /= child1.number_of_bins
       
-        if(child1.number_of_bins == L2)  
-            end_time = clock();
-            status.global_best_solution = Copy_Solution( child1, status, 0);
-            status.global_best_solution.generation = generation+1;
-            status.TotalTime = (end_time - start)
-            WriteOutput(status);
-            status.is_optimal_solution = true;
+        if stop_criteria_is_met(individual, status)
             return 1
         end
       
-        Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
-        child2.generation = generation + 1
-        child2.fitness /= child2.number_of_bins
+        child2 = Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
       
-        if(child2.number_of_bins == L2)   
-            end_time = clock();
-            status.global_best_solution = Copy_Solution( child2, status, 0);
-            status.global_best_solution.generation = generation+1;
-            status.TotalTime = (end_time - start);
-            WriteOutput(status);
-            status.is_optimal_solution = true;
+        if stop_criteria_is_met(individual, status)
             return 1
         end
         
         i-=1; j+=2
     end
+
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # aqui para abajo falta
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     # ==========================================================================
     #               Controlled replacement for crossover
@@ -644,95 +646,45 @@ end
 #   The positions in the population of the two parent solutions: father_1 and father_2
 #   The position in the set of children of the child solution: child
 # ==============================================================================
+
+has_repeated_items(bin, used_items) = findfirst(used_items[bin.w]) != nothing
+
 function Gene_Level_Crossover_FFD( father_1,  father_2, status)
-
-#   k,
-#      counter,
-#      k2 = 0,
-#      ban = 1,
-#         items[ATTRIBUTES] = {0},
-#         free_items[ATTRIBUTES] = {0};
-#   children[child].highest_avaliable = bin_capacity;
-
-    counter = max(father_1.number_of_bins, father_2.number_of_bins)
-
-    
     sort!(father_1.bins; lt = (a, b) -> b.Bin_Fullness < a.Bin_Fullness)
     sort!(father_2.bins; lt = (a, b) -> b.Bin_Fullness < a.Bin_Fullness)
 
+    counter = min(father_1.number_of_bins, father_2.number_of_bins)
 
-    for k = 1:father_1.number_of_bins
-   
-        if father_1.bins[k].Bin_Fullness >= father_2.bins[k].Bin_Fullness
-            
-            # solo copia el bin si no estan repetidos los items
-            ban = Used_Items(father_1, random_order1[k], items);
-            if (ban == 1)
-                children[child][k2].w.clone_linked_list(father_1.bins[k].w);
-                children[child][k2+=1].Bin_Fullness = father_1.bins[k].Bin_Fullness;
-            
-                if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
-                    children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
-                end
-            end
-            
-            if(father_2.bins[k].Bin_Fullness > 0)
-                ban = Used_Items(father_2, random_order2[k], items);
-                if (ban == 1)
-                    children[child][k2].w.clone_linked_list(father_2.bins[k].w);
-                    children[child][k2+=1].Bin_Fullness = father_2.bins[k].Bin_Fullness;
+    bins = Bin[]
 
-                    if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
-                        children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
-                    end
-                end
-            end
-        else
-            if(father_2.bins[k].Bin_Fullness > 0)
-                ban = Used_Items(father_2, random_order2[k], items);
-                if (ban == 1)
-                    children[child][k2].w.clone_linked_list(father_2.bins[k].w);
-                    children[child][k2+=1].Bin_Fullness = father_2.bins[k].Bin_Fullness;
-                    
-                    if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
-                        children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
-                    end
-                end
-            end
+    used_items = zero(Bool, status.number_items)
 
-            ban = Used_Items(father_1, random_order1[k], items);
-            if (ban == 1)
-                children[child][k2].w.clone_linked_list(father_1.bins[k].w);
-                children[child][k2+=1].Bin_Fullness = father_1.bins[k].Bin_Fullness;
-                if(children[child][k2-1].Bin_Fullness < children[child].highest_avaliable)
-                    children[child].highest_avaliable = children[child][k2-1].Bin_Fullness;
-                end
-            end
+    for i = 1:counter
+        if father_1.bins[i].Bin_Fullness >= father_1.bins[i].Bin_Fullness && !has_repeated_items(father_1.bins[i], used_items)
+            used_items[father_1.bins[i].w] .= true
+            push!(bins, father_1.bins[i])
+        elseif !has_repeated_items(father_2.bins[i], used_items)
+            used_items[father_1.bins[i].w] .= true
+            push!(bins, father_1.bins[i])
         end
     end
 
+    FF.(findall(!, used_items), bins)
 
-    k = 0;
-    for(counter = 0; counter < number_items; counter+=1)
-        if(items[ordered_weight[counter]] == 0)
-            free_items [k+=1] = ordered_weight[counter];
-        end
+    return Solution(bins, status)
+
+
+end
+
+function stop_criteria_is_met(individual, status)
+    if(individual.number_of_bins == status.L2)  
+        status.end_time = clock();
+        status.global_best_solution = Copy_Solution( individual, status, 0);
+        status.TotalTime = (status.end_time - status.start)
+        status.is_optimal_solution = true
+        WriteOutput(status);
+        exit(0)
     end
-   
-    if(k > 0)
-        bin_i = 0;
-        for(counter = 1:k-1)
-            FF(free_items[counter], children[child], k2, bin_i,0);
-            FF(free_items[counter], children[child], k2, bin_i,1);
-        end
-    else
-        for(k = 0; k < k2; k+=1)
-            children[child].fitness += pow((children[child][k].Bin_Fullness / bin_capacity), 2);
-        end
-    end
-    children[child][number_items+1].Bin_Fullness = k2;
-    free(random_order1);
-    free(random_order2);
 end
 
 
