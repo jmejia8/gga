@@ -183,7 +183,7 @@ function Status(;
         _p_,
         start,
         end_time,
-        status.global_best_solution,
+        global_best_solution,
         population,
         children,
         seed_emptybin,
@@ -253,6 +253,7 @@ function main()
         end
 
         for file in readlines("instances/instances.txt")
+            @show file
             data = readdlm(joinpath("instances", file); comments=true, comment_char='/')
 
             status.number_items, status.bin_capacity, status.best_solution = data[1:3]
@@ -264,6 +265,7 @@ function main()
             status.L2, status.n_ = LowerBound(status)
             status.permutation = status.ordered_weight[status.n_+1:end]
 
+            Generate_Initial_Population(status)
             Generation(status)
 
             return status
@@ -288,6 +290,7 @@ function GGA_CGT(status)
         
         for generation = 1:max_gen
             # Generation() returns 1 if an optimal solution was found
+            status.generation = generation
             if Generation(status)
                 break;
             end
@@ -507,6 +510,14 @@ function FF(item,  bins::Bins, status)
 
 end
 
+function Copy_Solution(solution2, status, delete_solution2)
+    solution = deepcopy(solution2)
+    solution.generation = status.generation;
+
+    return solution
+
+end
+
 
 # To apply the reproduction technique: Controlled selection and Controlled replacement.
 # Output:
@@ -520,7 +531,11 @@ function Generation(status)
     # ==========================================================================
 
     # Sort_Ascending_IndividualsFitness();
-    sort!(population, lt = (a, b) -> a.fitness < b.fitness)
+    sort!(status.population, lt = (a, b) -> a.fitness < b.fitness)
+    P_size = status.P_size
+    B_size = status.B_size
+    p_c = status.p_c
+
 
     m = P_size - floor(Int, P_size*B_size)
     random_individuals = shuffle(1:m)
@@ -529,10 +544,12 @@ function Generation(status)
     best_individuals = shuffle(m:P_size);
 
     k = 1
-    h = P_size
+    h = length(best_individuals)
     i = P_size
     j = 1
    
+    children = Solution[]
+
     while (i >= P_size - (p_c/2*P_size))
         f1 = best_individuals[h];   h-=1
         f2 = random_individuals[k]; k+=1
@@ -543,96 +560,77 @@ function Generation(status)
       
         child1 = Gene_Level_Crossover_FFD(status.population[f1], status.population[f2], status)
       
-        if stop_criteria_is_met(individual, status)
+        if stop_criteria_is_met(child1, status)
             return 1
         end
+
+        push!(children, child1)
       
         child2 = Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
       
-        if stop_criteria_is_met(individual, status)
+        if stop_criteria_is_met(child1, status)
             return 1
         end
         
+        push!(children, child2)
         i-=1; j+=2
     end
 
+
+    # ==========================================================================
+    #               Controlled replacement for crossover
+    # ==========================================================================
+    k = 1
+    for j = 1:round(Int, p_c/2*P_size - 1)
+        population[random_individuals[k]] = children[j]
+        k+=1
+    end
+
+    k = 1
+    i = P_size
+    while i > P_size - (p_c/2*P_size)
+        while population[k].generation == status.generation
+            k+=1;
+        end
+        population[k] = children[j]
+        k += 1
+        i-=1
+        j+=1
+   end
+    
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # aqui para abajo falta
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
     # ==========================================================================
-    #               Controlled replacement for crossover
+    #                   Controlled selection for mutation 
     # ==========================================================================
-    k = 0;
-    for j = 1:p_c/2*P_size - 1
-        Copy_Solution(child1, status, 1);
-        k+=1
-    end
+    sort!(population, lt = (a, b) -> a.fitness < b.fitness)
 
-    k = 0;
-
-   for(i = P_size - 1; i > P_size - (p_c/2*P_size); i-=1, j+=1)
-        while population[k].generation == generation + 1
-            k+=1;
-        end
-        Copy_Solution(child1, status, 1);
-   end
-    
-    """
-    /*****************************************************************************************************-
-    ********************************Controlled selection for mutation**************************************
-    ****************************************************************************************************-*/
-    """
-    Sort_Ascending_IndividualsFitness();
-    # if(generation > 1 && repeated_fitness > 0.1*P_size)
-    #   return (2);
     j = 0;
     for i = reverse(1:(P_size - (p_m*P_size)))
   
-        if(j < P_size*B_size && generation+ 1 - population[i].generation < life_span)
+        if j < P_size*B_size && status.generation - population[i].generation < status.life_span
       
-            """
-            /*****************************************************************************************************-
-            **********************************Controlled replacement for mutation**********************************
-            ****************************************************************************************************-*/
-            """
-            Copy_Solution(population[i], status, 0);
-            Adaptive_Mutation_RP(j, k_cs, 1);
-            population[j].generation = generation + 1;
-            population[j].fitness /= population[j].number_of_bins;
+            # ==================================================================
+            #           Controlled replacement for mutation
+            # ==================================================================
+            population[j] = Copy_Solution(population[i], status, 0);
+            Adaptive_Mutation_RP(population[j], status.k_cs, true);
           
-            if(population[j].number_of_bins == L2)
-                end_time = clock();
-                status.global_best_solution = Copy_Solution( population[j], status, 0);
-                status.global_best_solution.fitness = population[j].fitness;;
-                status.global_best_solution.generation = generation+1;
-                status.global_best_solution.number_of_bins = population[j].number_of_bins;
-                status.global_best_solution.fully_bins = population[j].fully_bins;
-                status.TotalTime = (end_time - start);
-                WriteOutput(status);
-                status.is_optimal_solution = true;
+            if stop_criteria_is_met(population[j], status)
                 return 1
             end
           
             j+=1;
         else
-            Adaptive_Mutation_RP(i, k_ncs, 0);
-            population[i].generation = generation + 1;
-            population[i].fitness /= population[i].number_of_bins;
-            if population[i].number_of_bins == L2
-                end_time = clock();
-                status.global_best_solution = Copy_Solution( population[i], status, 0);
-                status.global_best_solution.fitness = population[i].fitness;;
-                status.global_best_solution.generation = generation+1;
-                status.global_best_solution.number_of_bins = population[i].number_of_bins;
-                status.global_best_solution.fully_bins = population[i].fully_bins;
-                status.TotalTime = (end_time - start);
-                WriteOutput(status);
-                status.is_optimal_solution = true;
+            Adaptive_Mutation_RP(i, k_ncs, false);
+            
+            if stop_criteria_is_met(population[i], status)
                 return 1
             end
+
         end
     end
     
@@ -657,7 +655,7 @@ function Gene_Level_Crossover_FFD( father_1,  father_2, status)
 
     bins = Bin[]
 
-    used_items = zero(Bool, status.number_items)
+    used_items = zeros(Bool, status.number_items)
 
     for i = 1:counter
         if father_1.bins[i].Bin_Fullness >= father_1.bins[i].Bin_Fullness && !has_repeated_items(father_1.bins[i], used_items)
@@ -686,6 +684,145 @@ function stop_criteria_is_met(individual, status)
         exit(0)
     end
 end
+
+# To produce a small modification in a solution.
+# Input:
+#   The position in the population of the solution to mutate: individual
+#   The rate of change to calculate the number of bins to eliminate: k
+#   A value that indicates if the solution was cloned: is_cloned
+function Adaptive_Mutation_RP(individual, k, is_cloned, status)
+
+  # 
+  #        number_bins,
+  #        i,
+  #        number_free_items = 0,
+  #        free_items[ATTRIBUTES] = {0},
+  #        ordered_BinFullness[ATTRIBUTES] = {0};
+  #  node *p;
+
+    ordered_BinFullness = 1:individual.number_of_bins
+   
+    if is_cloned
+        Sort_Random(ordered_BinFullness)
+    end
+
+    # Sort_Ascending_BinFullness
+    sort!(individual.bins; lt = (a, b) -> a.Bin_Fullness < b.Bin_Fullness)
+
+    i = 1;
+    
+    while individual.bins[i].Bin_Fullness < bin_capacity && i < individual.number_of_bins
+        i+=1;
+    end    
+    
+    _p_ = 1 / k
+    number_bins = ceil(i*((2 - i/individual.number_of_bins) / pow(i,_p_))*(1 - rand(1:(ceil(Int,(1/pow(i,_p_)))))));
+    
+    # destruir  'number_bins' 
+    free_items = zeros(Bool, status.number_items)
+    for i = 1:number_bins
+        bin = popfirst!(individual.bins)
+        free_items[bin.w] .= true
+    end
+ 
+    individual.number_of_bins = length(individual.bins);
+    number_bins = individual.number_of_bins;
+ 
+    RP(individual, number_bins, free_items, number_free_items) 
+end
+
+function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_items)
+    p, s = bin.w[id1], bin.w[id2]
+
+    sw = weight[p] + weight[s]
+
+    for i = 1:number_free_items-1
+        a = free_items[i]
+        if weight[i] >= sw && bin.Bin_Fullness + weight[i]  - sw <= bin_capacity
+            bin.Bin_Fullness += weight[i]  - sw
+            bin.w[id1] = free_items[i]
+
+            deleteat!(bin.w, id2)
+            push!(new_free_items, p, s)
+            return true
+        end
+        
+        b=i+1
+        
+        if weight[b] >= sw && bin.Bin_Fullness + weight[b]  - sw <= bin_capacity
+            bin.Bin_Fullness += weight[b]  - sw
+            bin.w[id1] = free_items[b]
+
+            deleteat!(bin.w, id2)
+            push!(new_free_items, p, s)
+            return true
+        end
+
+        for j = i+1:number_free_items
+            b = free_items[j]
+            if weight[a] + weight[b] >= sw && bin.Bin_Fullness + weight[b] + weight[a]  - sw <= bin_capacity
+                bin.Bin_Fullness += weight[a] + weight[b]   - sw
+                bin.w[id1] = free_items[a]
+                bin.w[id2] = free_items[b]
+
+                push!(new_free_items, p, s)
+                return true 
+            end
+        end
+    end
+
+    false
+    
+end
+
+# To reinsert free items into an incomplete BPP solution.
+function RP( individual,  F)
+
+  # 
+  #     i,
+  #        k,
+  #        k2,
+  #        ban,
+  #        sum = 0,
+  #        total_free = 0,
+  #        ordered_BinFullness[ATTRIBUTES] = {0},
+  #     *new_free_items = new  [2];
+
+   # node   *p,
+   #    *s,
+   #       *aux;
+
+    higher_weight = weight[F[0]];
+    lighter_weight = weight[F[0]];
+    # bin_i = b;
+    individual.fitness = 0;
+    individual.fully_bins = 0;
+    individual.highest_avaliable = bin_capacity;
+
+    number_free_items = length(F)
+
+    weight = status.weight
+
+    Sort_Random(F)
+
+    new_free_items = Int[]
+    update_sol_flag = false
+
+    for bin in individual.bins
+        for i = 1:length(bin.w)
+            for j = j+1:length(bin.w)
+                update_sol_flag = update_sol_flag || swap(bin, weight, i, j, F, new_free_items, number_free_items)
+            end
+        end
+    end
+   
+
+    shuffle!(new_free_items)
+    FF.(F, bin, status);
+
+    
+end
+
 
 
 main()
