@@ -5,240 +5,7 @@ import Random: shuffle, shuffle!, seed!
 import Printf.@sprintf
 
 include("io-utils.jl")
-
-mutable struct Bin
-  w::Array{Int} # weights
-  Bin_Fullness::Float64 
-end
-
-Bin() = Bin(Float64[], 0.0)
-
-Bins = Array{Bin} 
-
-mutable struct Solution
-    bins::Bins
-    fitness::Float64
-    number_of_bins::Int
-    generation::Int # Saves the generation in which the solution was generated
-    fully_bins::Int # Saves the number of bins in the solution that are fully at 100%
-    highest_avaliable::Float64 # Saves the fullness of the bin with the highest avaliable capacity in the solution
-end
-
-function Solution(;bins=Bins[],
-    fitness = Inf,
-    number_of_bins = 0,
-    generation = 0,
-    fully_bins = 0,
-    highest_avaliable = Inf)
-    
-    Solution(bins,fitness,number_of_bins,generation,fully_bins,highest_avaliable)
-end
-
-function Solution(bins::Bins, status)
-    s = sum( b -> sum(view(status.weight, b.w))^2, bins)
-    number_of_bins = length(bins)
-    fitness = s / (status.bin_capacity*number_of_bins)^2
-    generation = status.generation
-    fully_bins = sum( b ->  b.Bin_Fullness == status.bin_capacity, bins )
-    highest_avaliable = minimum([ b.Bin_Fullness for b in bins ])
-
-    Solution(bins,fitness,number_of_bins,generation,fully_bins,highest_avaliable)
-end
-
-function update_solution(individual::Solution, status)
-    bins = individual.bins
-    s = sum( b -> sum(view(status.weight, b.w))^2, bins)
-    individual.number_of_bins = length(bins)
-    individual.fitness = s / (status.bin_capacity*individual.number_of_bins)^2
-    individual.generation = status.generation
-    individual.fully_bins = sum( b ->  b.Bin_Fullness == status.bin_capacity, bins )
-    individual.highest_avaliable = minimum([ b.Bin_Fullness for b in bins ])
-end
-
-mutable struct Status
-    is_optimal_solution::Bool
-    save_bestSolution::Bool
-    repeated_fitness::Bool
-    max_gen::Int
-    life_span::Int
-    P_size::Int
-    seed::Int
-
-    conf::Int
-    number_items::Int
-    bin_capacity::Int
-    generation::Int
-    best_solution::Int
-    n_::Int
-    L2::Int
-    bin_i::Int
-    higher_weight::Int
-    lighter_weight::Int
-    ordered_weight::Array{Int, 1}
-    weight::Array{Float64, 1}
-    permutation::Array{Int, 1}
-    items_auxiliary::Array{Int, 1}
-    ordered_population::Array{Int, 1}
-    best_individuals::Array{Int, 1}
-    random_individuals::Array{Int, 1}
-
-
-    p_m::Float64
-    p_c::Float64
-    k_ncs::Float64
-    k_cs::Float64
-    B_size::Float64
-    TotalTime::Float64
-
-
-    total_accumulated_weight::Float64
-    weight1::Array{Float64, 1}
-    _p_::Float64
-
-    start::Float64
-    end_time::Float64
-
-
-    global_best_solution::Solution
-    population::Array{Solution, 1}
-    children::Array{Solution, 1}
-
-    seed_emptybin::Int
-    seed_permutation::Int
-
-    file::String
-    nameC::String
-end
-
-function Status(;
-    is_optimal_solution=false,
-    save_bestSolution=false,
-    repeated_fitness=false,
-
-    max_gen=0,
-    life_span=0,
-    P_size=0,
-    seed=0,
-
-    conf=0,
-    number_items=0,
-    bin_capacity=0,
-    generation=0,
-    best_solution=0,
-    n_=0,
-    L2=0,
-    bin_i=0,
-    higher_weight=0,
-    lighter_weight=0,
-
-    ordered_weight=Int[],
-    weight=Float64[],
-    permutation=Int[],
-    items_auxiliary=Int[],
-    ordered_population=Int[],
-    best_individuals=Int[],
-    random_individuals=Int[],
-
-
-    p_m=0.0,
-    p_c=0.0,
-    k_ncs=0.0,
-    k_cs=0.0,
-    B_size=0.0,
-    TotalTime=0.0,
-
-
-    total_accumulated_weight=0,
-    weight1=Float64[],
-    _p_=0.0,
-
-    start=0,
-    end_time=0,
-
-
-    global_best_solution=Solution(),
-    population=Solution[],
-    children=Solution[],
-
-    seed_emptybin=0,
-    seed_permutation=0,
-    file="",
-    nameC=""
-)
-
-    Status(is_optimal_solution,
-        save_bestSolution,
-        repeated_fitness,
-        max_gen,
-        life_span,
-        P_size,
-        seed,
-        conf,
-        number_items,
-        bin_capacity,
-        generation,
-        best_solution,
-        n_,
-        L2,
-        bin_i,
-        higher_weight,
-        lighter_weight,
-        ordered_weight,
-        weight,
-        permutation,
-        items_auxiliary,
-        ordered_population,
-        best_individuals,
-        random_individuals,
-        p_m,
-        p_c,
-        k_ncs,
-        k_cs,
-        B_size,
-        TotalTime,
-        total_accumulated_weight,
-        weight1,
-        _p_,
-        start,
-        end_time,
-        global_best_solution,
-        population,
-        children,
-        seed_emptybin,
-        seed_permutation,file,nameC)
-    
-end
-
-function Status(configuration)
-    status = Status()
-
-    status.conf    = configuration[1] 
-    status.P_size  = configuration[2] 
-    status.max_gen = configuration[3] 
-    status.p_m     = configuration[4] 
-    status.p_c     = configuration[5] 
-    status.k_ncs   = configuration[6] 
-    status.k_cs    = configuration[7] 
-    status.B_size  = configuration[8] 
-    status.life_span= configuration[9] 
-    status.seed     = configuration[10] 
-    status.save_bestSolution = configuration[11]==1
-
-    seed_permutation = status.seed;
-    seed_emptybin = status.seed;
-    
-    status.ordered_population = collect(1:status.P_size);
-    status.random_individuals = collect(1:status.P_size);
-    status.best_individuals = collect(1:status.P_size);
-
-    status.is_optimal_solution = false;
-    status.generation = 0;
-    status.repeated_fitness = 0
-
-    seed!(status.seed)
-
-    status
-end
+include("structures.jl")
 
 function main()
 
@@ -309,6 +76,7 @@ function GGA_CGT(status)
     status.start = time();
     # Generate_Initial_Population() returns true if an optimal solution was found
     if !Generate_Initial_Population(status)
+        status.global_best_solution = Find_Best_Solution(status)
         
         for generation = 1:status.max_gen
             # Generation() returns 1 if an optimal solution was found
@@ -343,6 +111,12 @@ function Generate_Initial_Population(status)
 
     for individual = status.population
         FF_n_(individual, status);
+
+        if !is_feasible(individual, status)
+            @error "Error found in Generate_Initial_Population"
+            exit()
+            return true
+        end
         
         if stop_criteria_is_met(individual,status)
             return true
@@ -382,10 +156,12 @@ function FF_n_(individual, status)
         end
     end
     
-    individual.number_of_bins = length(individual.bins)
-
-    s = sum( b -> sum(view(status.weight, b.w))^2, individual.bins)
-    individual.fitness = s / (status.bin_capacity*individual.number_of_bins)^2
+    update_solution(individual, status)
+    
+    if !is_feasible(individual, status)
+        @error "Error found in FF_n_"
+        exit()
+    end
 end
 
 # To sort the elements between the positions [k] and [n] of an array in random order
@@ -588,7 +364,7 @@ function Generation(status)
       
         child2 = Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
       
-        if stop_criteria_is_met(child1, status)
+        if stop_criteria_is_met(child2, status)
             return true
         end
         
@@ -693,7 +469,14 @@ function Gene_Level_Crossover_FFD( father_1,  father_2, status)
         FF(item, bins, status)
     end
 
-    return Solution(bins, status)
+    s =  Solution(bins, status)
+
+    if !is_feasible(s, status)
+        @error "Error desde el Gene_Level_Crossover_FFD"
+        exit()
+    end
+
+    s
 
 
 end
@@ -720,14 +503,6 @@ end
 #   The rate of change to calculate the number of bins to eliminate: k
 #   A value that indicates if the solution was cloned: is_cloned
 function Adaptive_Mutation_RP(individual, k, is_cloned, status)
-
-  # 
-  #        number_bins,
-  #        i,
-  #        number_free_items = 0,
-  #        free_items[ATTRIBUTES] = {0},
-  #        ordered_BinFullness[ATTRIBUTES] = {0};
-  #  node *p;
 
     pow(a,b) = a^b
 
@@ -758,18 +533,22 @@ function Adaptive_Mutation_RP(individual, k, is_cloned, status)
     end
  
     individual.number_of_bins = length(individual.bins);
-    number_bins = individual.number_of_bins;
  
 
     RP(individual, findall(free_items), status)
 
     update_solution(individual, status)
+    if !is_feasible(individual, status)
+        @error "Error found in Adaptive_Mutation_RP"
+        exit()
+    end
 
 end
 
 
 
-function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_items, bin_capacity)
+function swap(bin, weight, id1, id2, free_items, new_free_items, bin_capacity)
+    number_free_items = length(free_items)
     p, s = bin.w[id1], bin.w[id2]
 
     sw = weight[p] + weight[s]
@@ -780,8 +559,9 @@ function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_ite
             bin.Bin_Fullness += weight[a]  - sw
             bin.w[id1] = a
 
-            deleteat!(bin.w, id2)
             push!(new_free_items, p, s)
+            deleteat!(bin.w, id2)
+            deleteat!(free_items, i)
             return true
         end
         
@@ -791,8 +571,9 @@ function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_ite
             bin.Bin_Fullness += weight[b]  - sw
             bin.w[id1] = b
 
-            deleteat!(bin.w, id2)
             push!(new_free_items, p, s)
+            deleteat!(bin.w, id2)
+            deleteat!(free_items, j+1)
             return true
         end
 
@@ -800,14 +581,19 @@ function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_ite
             b = free_items[j]
             if weight[a] + weight[b] >= sw && bin.Bin_Fullness + weight[b] + weight[a]  - sw <= bin_capacity
                 bin.Bin_Fullness += weight[a] + weight[b]   - sw
+                
                 bin.w[id1] = a
                 bin.w[id2] = b
 
                 push!(new_free_items, p, s)
+                deleteat!(free_items, i)
+                deleteat!(free_items, j)
                 return true 
             end
         end
     end
+
+
 
     false
     
@@ -832,24 +618,44 @@ function RP( individual,  F, status)
     for bin in individual.bins
         for i = 1:length(bin.w)
             for j = i+1:length(bin.w)
-                update_sol_flag = update_sol_flag || swap(bin, weight, i, j, F, new_free_items, number_free_items, status.bin_capacity)
+                update_sol_flag = swap(bin, weight, i, j, F, new_free_items, status.bin_capacity)
+                update_sol_flag && break
             end
+            update_sol_flag && break
         end
+        
     end
    
+    push!(new_free_items, F...)
 
     shuffle!(new_free_items)
-    
-    for item = F
+
+
+    for item = new_free_items
         FF(item, individual, status);
     end
 
     
 end
 
-# function WriteOutput(status)
+function is_feasible(individual, status)
+    used_items = zeros(Int, status.number_items)
+    for bin = individual.bins
+        used_items[bin.w] .+= 1
+    end
+
+    if sum(used_items) != status.number_items || findfirst(a -> a != 1, used_items) != nothing
+        @error "Unexpected solution found:"
+        @show individual.bins
+        @show used_items
+        @show status.generation
+        return false
+
+    end
+
+    return true
     
-# end
+end
 
 
 main()
