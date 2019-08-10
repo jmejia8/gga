@@ -1,7 +1,10 @@
 # GGA-CGT
 # GROUPING GENETIC ALGORITHM WITH CONTROLLED GENE TRANSMISSION FOR THE BIN PACKING PROBLEM
 import DelimitedFiles.readdlm
-import Random: shuffle, shuffle!
+import Random: shuffle, shuffle!, seed!
+import Printf.@sprintf
+
+include("io-utils.jl")
 
 mutable struct Bin
   w::Array{Int} # weights
@@ -102,6 +105,9 @@ mutable struct Status
 
     seed_emptybin::Int
     seed_permutation::Int
+
+    file::String
+    nameC::String
 end
 
 function Status(;
@@ -156,6 +162,8 @@ function Status(;
 
     seed_emptybin=0,
     seed_permutation=0,
+    file="",
+    nameC=""
 )
 
     Status(is_optimal_solution,
@@ -197,7 +205,7 @@ function Status(;
         population,
         children,
         seed_emptybin,
-        seed_permutation)
+        seed_permutation,file,nameC)
     
 end
 
@@ -214,7 +222,7 @@ function Status(configuration)
     status.B_size  = configuration[8] 
     status.life_span= configuration[9] 
     status.seed     = configuration[10] 
-    status.save_bestSolution = configuration[11]
+    status.save_bestSolution = configuration[11]==1
 
     seed_permutation = status.seed;
     seed_emptybin = status.seed;
@@ -226,6 +234,8 @@ function Status(configuration)
     status.is_optimal_solution = false;
     status.generation = 0;
     status.repeated_fitness = 0
+
+    seed!(status.seed)
 
     status
 end
@@ -256,6 +266,7 @@ function main()
         status = Status(parms[nconf,:]); st = status
 
         nameC = string("Solutions_GGA-CGT/GGA-CGT_(", st.conf, ").txt");
+        status.nameC = nameC
         open(nameC,"w+") do output
             write(output , "CONF\t|P|\tmax_gen\tn_m\tn_c\tk1(non-cloned_solutions)\tk2(cloned_solutions)\t|B|\tlife_span\tseed");
             write(output, "\n$(st.conf)\t$(st.P_size)\t$(st.max_gen)\t$(st.p_m)\tp_c\t$(st.k_ncs)\t$(st.k_cs)\t$(st.B_size)\t$(st.life_span)\t$(st.seed)");
@@ -265,6 +276,7 @@ function main()
         i = 1
         for file_name in readlines("instances/instances.txt")
             @info "Solving instance: $file_name"
+            status.file = file_name
             data = readdlm(joinpath("instances", file_name); comments=true, comment_char='/')
 
             status.number_items, status.bin_capacity, status.best_solution = data[1:3]
@@ -279,6 +291,7 @@ function main()
             GGA_CGT(status)
 
             status = Status(parms[nconf,:])
+            return 
 
 
         end
@@ -834,9 +847,9 @@ function RP( individual,  F, status)
     
 end
 
-function WriteOutput(status)
+# function WriteOutput(status)
     
-end
+# end
 
 
 main()
