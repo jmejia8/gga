@@ -42,6 +42,16 @@ function Solution(bins::Bins, status)
     Solution(bins,fitness,number_of_bins,generation,fully_bins,highest_avaliable)
 end
 
+function update_solution(individual::Solution, status)
+    bins = individual.bins
+    s = sum( b -> sum(view(status.weight, b.w))^2, bins)
+    individual.number_of_bins = length(bins)
+    individual.fitness = s / (status.bin_capacity*individual.number_of_bins)^2
+    individual.generation = status.generation
+    individual.fully_bins = sum( b ->  b.Bin_Fullness == status.bin_capacity, bins )
+    individual.highest_avaliable = minimum([ b.Bin_Fullness for b in bins ])
+end
+
 mutable struct Status
     is_optimal_solution::Bool
     save_bestSolution::Bool
@@ -242,8 +252,8 @@ function main()
 
 
     for nconf = 1:size(parms, 1)
-        status = Status(parms[nconf,:]); st = status
 
+        status = Status(parms[nconf,:]); st = status
 
         nameC = string("Solutions_GGA-CGT/GGA-CGT_(", st.conf, ").txt");
         open(nameC,"w+") do output
@@ -252,8 +262,10 @@ function main()
             write(output, "\nInstancias \t L2 \t Bins \t Gen \t Time");
         end
 
-        for file in readlines("instances/instances.txt")
-            data = readdlm(joinpath("instances", file); comments=true, comment_char='/')
+        i = 1
+        for file_name in readlines("instances/instances.txt")
+            @info "Solving instance: $file_name"
+            data = readdlm(joinpath("instances", file_name); comments=true, comment_char='/')
 
             status.number_items, status.bin_capacity, status.best_solution = data[1:3]
             status.weight = sort(data[4:end], rev=true)
@@ -266,9 +278,8 @@ function main()
 
             GGA_CGT(status)
 
-            return status
-            # return status.population[end].bins
-            # GGA_CGT(status)
+            status = Status(parms[nconf,:])
+
 
         end
 
@@ -294,11 +305,11 @@ function GGA_CGT(status)
         end
 
         # is_optimal_solution is 1 if an optimal solution was printed before
-        status.best_solution = Find_Best_Solution(status);
+        status.global_best_solution = Find_Best_Solution(status);
         if !status.is_optimal_solution
             status.end_time = time();
             status.TotalTime = (status.end_time - status.start)
-            WriteOutput(status.best_solution, status);
+            WriteOutput(status);
         end
     end
 end
@@ -557,7 +568,7 @@ function Generation(status)
         child1 = Gene_Level_Crossover_FFD(status.population[f1], status.population[f2], status)
       
         if stop_criteria_is_met(child1, status)
-            return 1
+            return true
         end
 
         push!(children, child1)
@@ -565,7 +576,7 @@ function Generation(status)
         child2 = Gene_Level_Crossover_FFD(status.population[f2], status.population[f1], status)
       
         if stop_criteria_is_met(child1, status)
-            return 1
+            return true
         end
         
         push!(children, child2)
@@ -618,7 +629,7 @@ function Generation(status)
             Adaptive_Mutation_RP(status.population[j], status.k_cs, true, status);
           
             if stop_criteria_is_met(status.population[j], status)
-                return 1
+                return true
             end
           
             j+=1;
@@ -626,13 +637,13 @@ function Generation(status)
             Adaptive_Mutation_RP(status.population[i], status.k_ncs, false, status);
             
             if stop_criteria_is_met(status.population[i], status)
-                return 1
+                return true
             end
 
         end
     end
     
-    return 0;
+    return false
 end
 
 
@@ -683,8 +694,8 @@ function stop_criteria_is_met(individual, status)
         @show status.TotalTime
         @show individual.number_of_bins
         @show status.generation
+        @show status.best_solution
         WriteOutput(status);
-        exit(0)
         return true
     end
     return false
@@ -716,7 +727,10 @@ function Adaptive_Mutation_RP(individual, k, is_cloned, status)
     # Sort_Ascending_BinFullness
     sort!(individual.bins; lt = (a, b) -> a.Bin_Fullness < b.Bin_Fullness)
 
-    i = findfirst(b -> b.Bin_Fullness == status.bin_capacity,  individual.bins)-1
+    i = findfirst(b -> b.Bin_Fullness == status.bin_capacity,  individual.bins)
+    if i == nothing
+        i = 1
+    end
 
     _p_ = 1 / k
     ε = (2.0 - i / individual.number_of_bins) / (i^_p_)
@@ -734,8 +748,13 @@ function Adaptive_Mutation_RP(individual, k, is_cloned, status)
     number_bins = individual.number_of_bins;
  
 
-    RP(individual, findall(free_items), status) 
+    RP(individual, findall(free_items), status)
+
+    update_solution(individual, status)
+
 end
+
+
 
 function swap(bin, weight, id1, id2, free_items, new_free_items, number_free_items, bin_capacity)
     p, s = bin.w[id1], bin.w[id2]
