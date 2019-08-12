@@ -39,7 +39,6 @@ function main()
             write(output, "\nInstancias \t L2 \t Bins \t Gen \t Time");
         end
 
-        i = 1
         for file_name in readlines("instances/instances.txt")
             status.nameC = nameC
             @info "Solving instance: $file_name"
@@ -57,21 +56,11 @@ function main()
 
             GGA_CGT(status)
 
-            @show status.generation
-            @show length(status.global_best_solution.bins)
-            @show status.best_solution
-
-            return 
-            i+=1
-
-            if i > 30
-                return 
-            end
+            println("Generation:\t", status.generation)
+            println("        L2:\t", status.best_solution)
+            println("Best sol. :\t", length(status.global_best_solution.bins))
 
             status = Status(parms[nconf,:])
-
-            
-
 
         end
 
@@ -388,12 +377,8 @@ function Generation(status)
     # ==========================================================================
     #               Controlled replacement for crossover
     # ==========================================================================
-    k = 1
-    for j = 1:round(Int, p_c/2*P_size - 1)
-        status.population[random_individuals[k]] = children[j]
-        k+=1
-    end
-
+    k = round(Int, p_c/2*P_size - 1)
+    status.population[random_individuals[1:k]] = children[1:k]
 
 
     older_sols = findall( sol -> sol.generation < status.generation, status.population)
@@ -410,7 +395,7 @@ function Generation(status)
     
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # aqui para abajo falta
+    # aqui para abajo falta (parece que funciona)
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # ==========================================================================
