@@ -59,6 +59,9 @@ function main()
             println("Generation:\t", status.generation)
             println("        L2:\t", status.best_solution)
             println("Best sol. :\t", length(status.global_best_solution.bins))
+            println("  Log file:\t", nameC)
+            println("--------------------------------------------------")
+
 
             status = Status(parms[nconf,:])
 
