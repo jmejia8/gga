@@ -1,6 +1,6 @@
 function WriteOutput(status)
     open(status.nameC, "a") do output
-      str = @sprintf("\n%s \t %d \t %d \t %d \t %f", status.file, status.L2, status.global_best_solution.fitness, status.generation, status.TotalTime)
+      str = @sprintf("\n%s \t %d \t %d \t %d \t %f", status.file, status.L2, length(status.global_best_solution.bins), status.generation, status.TotalTime)
       write(output, str)
     end
     status.save_bestSolution && sendtofile(status.global_best_solution, status);
@@ -17,6 +17,7 @@ function sendtofile(best, status)
       write(output,"\n****************************GGA-CGT global best solution******************************\n");
       write(output,"Number of bins:\n$(best.number_of_bins)\n");
       write(output,"Fitness:\n$(best.fitness)\n");
+      write(output,"Time:\n$(status.TotalTime)\n");
       write(output,"Optimal order of the weights:\n");
 
       for bin = best.bins
