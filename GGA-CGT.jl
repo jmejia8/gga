@@ -409,12 +409,20 @@ function Generation(status)
     j = 1
     for i = reverse(1:round(Int,P_size - (p_m*P_size)))
   
+        child = Solution(deepcopy(status.population[i].bins), status)
+
+        if !is_feasible(child, status)
+            @show i, j
+            @error "Error found in Generation 00"
+            display(child.bins)
+            exit()
+        end
+        
         if j < P_size*B_size && status.generation - status.population[i].generation < status.life_span
       
             # ==================================================================
             #           Controlled replacement for mutation
             # ==================================================================
-            child = deepcopy(status.population[i])
             Adaptive_Mutation_RP(child, status.k_cs, true, status)
 
             if !is_feasible(child, status)
@@ -431,7 +439,6 @@ function Generation(status)
           
             j+=1;
         else
-            child = deepcopy(status.population[i])
             Adaptive_Mutation_RP(child, status.k_ncs, false, status);
 
             status.population[i] = child
@@ -520,6 +527,12 @@ end
 #   The rate of change to calculate the number of bins to eliminate: k
 #   A value that indicates if the solution was cloned: is_cloned
 function Adaptive_Mutation_RP(individual, k, is_cloned, status)
+
+    if !is_feasible(individual, status)
+        @show is_cloned
+        @error "Error found in Adaptive_Mutation_RP 1"
+        exit()
+    end
 
     pow(a,b) = a^b
 
