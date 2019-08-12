@@ -33,7 +33,6 @@ function main()
         status = Status(parms[nconf,:]); st = status
 
         nameC = string("Solutions_GGA-CGT/GGA-CGT_(", st.conf, ").txt");
-        status.nameC = nameC
         open(nameC,"w+") do output
             write(output , "CONF\t|P|\tmax_gen\tn_m\tn_c\tk1(non-cloned_solutions)\tk2(cloned_solutions)\t|B|\tlife_span\tseed");
             write(output, "\n$(st.conf)\t$(st.P_size)\t$(st.max_gen)\t$(st.p_m)\tp_c\t$(st.k_ncs)\t$(st.k_cs)\t$(st.B_size)\t$(st.life_span)\t$(st.seed)");
@@ -42,6 +41,7 @@ function main()
 
         i = 1
         for file_name in readlines("instances/instances.txt")
+            status.nameC = nameC
             @info "Solving instance: $file_name"
             status.file = file_name
             data = readdlm(joinpath("instances", file_name); comments=true, comment_char='/')
@@ -57,8 +57,20 @@ function main()
 
             GGA_CGT(status)
 
-            status = Status(parms[nconf,:])
+            @show status.generation
+            @show length(status.global_best_solution.bins)
+            @show status.best_solution
+
             return 
+            i+=1
+
+            if i > 30
+                return 
+            end
+
+            status = Status(parms[nconf,:])
+
+            
 
 
         end
@@ -414,8 +426,16 @@ function Generation(status)
             # ==================================================================
             #           Controlled replacement for mutation
             # ==================================================================
-            status.population[j] = Copy_Solution(status.population[i], status, 0);
-            Adaptive_Mutation_RP(status.population[j], status.k_cs, true, status);
+            child = deepcopy(status.population[i])
+            Adaptive_Mutation_RP(child, status.k_cs, true, status)
+
+            if !is_feasible(child, status)
+                @show i, j
+                @error "Error found in Generation 2"
+                exit()
+            end
+
+            status.population[j] = child
           
             if stop_criteria_is_met(status.population[j], status)
                 return true
@@ -423,7 +443,16 @@ function Generation(status)
           
             j+=1;
         else
-            Adaptive_Mutation_RP(status.population[i], status.k_ncs, false, status);
+            child = deepcopy(status.population[i])
+            Adaptive_Mutation_RP(child, status.k_ncs, false, status);
+
+            status.population[i] = child
+
+            if !is_feasible(child, status)
+                @show i, j
+                @error "Error found in Generation 3"
+                exit()
+            end
             
             if stop_criteria_is_met(status.population[i], status)
                 return true
@@ -509,11 +538,12 @@ function Adaptive_Mutation_RP(individual, k, is_cloned, status)
     ordered_BinFullness = collect(1:individual.number_of_bins)
    
     if is_cloned
-        Sort_Random(ordered_BinFullness)
+        shuffle!(individual.bins)
+    else
+        sort!(individual.bins; lt = (a, b) -> a.Bin_Fullness < b.Bin_Fullness)
     end
 
     # Sort_Ascending_BinFullness
-    sort!(individual.bins; lt = (a, b) -> a.Bin_Fullness < b.Bin_Fullness)
 
     i = findfirst(b -> b.Bin_Fullness == status.bin_capacity,  individual.bins)
     if i == nothing
@@ -547,7 +577,7 @@ end
 
 
 
-function swap(bin, weight, id1, id2, free_items, new_free_items, bin_capacity)
+function swap!(bin, weight, id1, id2, free_items, new_free_items, bin_capacity)
     number_free_items = length(free_items)
     p, s = bin.w[id1], bin.w[id2]
 
@@ -565,20 +595,19 @@ function swap(bin, weight, id1, id2, free_items, new_free_items, bin_capacity)
             return true
         end
         
-        b=free_items[i+1]
-        
-        if weight[b] >= sw && bin.Bin_Fullness + weight[b]  - sw <= bin_capacity
-            bin.Bin_Fullness += weight[b]  - sw
-            bin.w[id1] = b
-
-            push!(new_free_items, p, s)
-            deleteat!(bin.w, id2)
-            deleteat!(free_items, j+1)
-            return true
-        end
 
         for j = i+1:number_free_items
-            b = free_items[j]
+            b=free_items[j]
+            
+            if weight[b] >= sw && bin.Bin_Fullness + weight[b]  - sw <= bin_capacity
+                bin.Bin_Fullness += weight[b]  - sw
+                bin.w[id1] = b
+
+                push!(new_free_items, p, s)
+                deleteat!(bin.w, id2)
+                deleteat!(free_items, j)
+                return true
+            end
             if weight[a] + weight[b] >= sw && bin.Bin_Fullness + weight[b] + weight[a]  - sw <= bin_capacity
                 bin.Bin_Fullness += weight[a] + weight[b]   - sw
                 
@@ -586,8 +615,7 @@ function swap(bin, weight, id1, id2, free_items, new_free_items, bin_capacity)
                 bin.w[id2] = b
 
                 push!(new_free_items, p, s)
-                deleteat!(free_items, i)
-                deleteat!(free_items, j)
+                deleteat!(free_items, (i,j))
                 return true 
             end
         end
@@ -614,18 +642,17 @@ function RP( individual,  F, status)
 
     new_free_items = Int[]
     update_sol_flag = false
-
     for bin in individual.bins
-        for i = 1:length(bin.w)
+        for i = 1:length(bin.w)-1
             for j = i+1:length(bin.w)
-                update_sol_flag = swap(bin, weight, i, j, F, new_free_items, status.bin_capacity)
+                update_sol_flag = swap!(bin, weight, i, j, F, new_free_items, status.bin_capacity)
                 update_sol_flag && break
             end
             update_sol_flag && break
         end
         
     end
-   
+
     push!(new_free_items, F...)
 
     shuffle!(new_free_items)
@@ -634,7 +661,6 @@ function RP( individual,  F, status)
     for item = new_free_items
         FF(item, individual, status);
     end
-
     
 end
 
